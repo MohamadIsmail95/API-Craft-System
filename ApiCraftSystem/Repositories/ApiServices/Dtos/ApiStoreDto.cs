@@ -1,0 +1,48 @@
+﻿using ApiCraftSystem.Helper.Enums;
+using System.ComponentModel.DataAnnotations;
+
+namespace ApiCraftSystem.Repositories.ApiServices.Dtos
+{
+    public class ApiStoreDto
+    {
+        public Guid Id { get; set; }
+
+        [Required]
+        public string Title { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
+
+        [Required]
+        public string Url { get; set; } = string.Empty;
+
+        public string? ApiBody { get; set; } = string.Empty;
+
+        public string? ApiResponse { get; set; } = string.Empty;
+
+        public string? ServerIp { get; set; } = string.Empty;
+
+        public string? ServerPort { get; set; } = string.Empty;
+
+        public string? DatabaseName { get; set; } = string.Empty;
+
+        [Required]
+        public string TableName { get; set; } = string.Empty;
+        public string? DatabaseUserName { get; set; } = string.Empty;
+        public string? SchemaName { get; set; } = string.Empty;
+        public string? DatabaseUserPassword { get; set; } = string.Empty;
+
+        [Required]
+        public string ConnectionString { get; set; } = string.Empty;
+
+        public ApiMethodeType MethodeType { get; set; }
+
+        [Required]
+        public DatabaseType DatabaseType { get; set; } = DatabaseType.SQLServer;
+
+        public List<ApiHeaderDto>? ApiHeaders { get; set; } = new List<ApiHeaderDto>();
+
+        [Required]
+        public List<ApiMapDto> ApiMaps { get; set; } = new List<ApiMapDto>();
+
+
+    }
+}

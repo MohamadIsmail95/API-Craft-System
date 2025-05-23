@@ -1,0 +1,143 @@
+﻿@page "/Api-Craft"
+@using ApiCraftSystem.Repositories.ApiServices.Dtos
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveServer
+@inherits ApiCraftBase
+@attribute [StreamRendering]
+@inject NavigationManager NavigationManager
+@attribute [Authorize]
+
+
+<PageTitle>Api Craft</PageTitle>
+
+
+@if(apis == null)
+{
+    <div class="d-flex justify-content-center">
+        <div class="spinner-grow" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+
+else
+{
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">API</h5>
+            <div class="position-absolute top-0 end-0 m-3">
+                <button type="button" class="btn btn-outline-primary" @onclick="@(() => NavigationManager.NavigateTo("/api-form"))">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+            </div>
+            <div class="input-group mb-3" style="margin-top:20px">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input @oninput="OnSearchInput" value="@PagingRequest.SearchTerm" class="form-control" placeholder="Search employees..." />
+            </div>
+
+            <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                            <th @onclick="() => SortBy(nameof(ApiStoreListDto.Title))" style="cursor:pointer">
+                                Title
+                                @SortIcon(nameof(ApiStoreListDto.Title))
+                        </th>
+                            <th @onclick="() => SortBy(nameof(ApiStoreListDto.Description))" style="cursor:pointer">
+                                Description
+                                @SortIcon(nameof(ApiStoreListDto.Description))
+                        </th>
+                            <th @onclick="() => SortBy(nameof(ApiStoreListDto.Url))" style="cursor:pointer">
+                                Url
+                                @SortIcon(nameof(ApiStoreListDto.Url))
+                        </th>
+                            <th @onclick="() => SortBy(nameof(ApiStoreListDto.MethodeType))" style="cursor:pointer">
+                            Type
+                                @SortIcon(nameof(ApiStoreListDto.MethodeType))
+                        </th>
+
+                       
+
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (apis == null)
+                    {
+                        <tr><td colspan="6">Loading...</td></tr>
+                    }
+                    else if (!apis.Any())
+                    {
+                        <tr><td colspan="6">No ApI found.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var api in apis)
+                        {
+                            <tr>
+                                    <td>@api.Title</td>
+                                    <td>@api.Description</td>
+                                    <td>@api.Url</td>
+                                    <td>@api.MethodeType</td>
+                                <td>
+                                        <button class="btn btn-primary btn-sm" @onclick="@(() => NavigationManager.NavigateTo("/api-form/" + api.Id))"><i class="bi bi-pencil-square"></i></button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => PromptDelete(api.Id)"><i class="bi bi-trash"></i></button>
+                                        <button class="btn btn-danger btn-sm"><i class="bi bi-gear-wide-connected"></i></button>
+                                        
+
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+            </div>
+            <nav>
+                <ul class="pagination">
+                    <li class="page-item @(PagingRequest.CurrentPage == 1 ? "disabled" : "")">
+                        <button class="page-link" @onclick="PrevPage">Previous</button>
+                    </li>
+                    @for (int i = 1; i <= pagingResponse.TotalPages; i++)
+                    {
+                        var pageIndex = i;
+                        <li class="page-item @(PagingRequest.CurrentPage == i ? "active" : "")">
+                            <button class="page-link" @onclick="() => GoToPage(pageIndex)">@i</button>
+                        </li>
+                    }
+                    <li class="page-item @(PagingRequest.CurrentPage == pagingResponse.TotalPages ? "disabled" : "")">
+                        <button class="page-link" @onclick="NextPage">Next</button>
+                    </li>
+
+                </ul>
+                <span class="fw-bold fs-8 text-secondary">Total Count: @pagingResponse.TotalCount</span>
+
+            </nav>
+
+
+        </div>
+    </div>
+
+}
+
+
+@if (showConfirmation)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" @onclick="CloseConfirmation"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this item?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseConfirmation">Cancel</button>
+                    <button class="btn btn-danger" @onclick="ConfirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

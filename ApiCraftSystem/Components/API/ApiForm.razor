@@ -1,0 +1,247 @@
+﻿@inherits ApiFormBase
+@page "/api-form"
+@page "/api-form/{Id:guid}"
+@using ApiCraftSystem.Helper.Enums
+@using Microsoft.AspNetCore.Authorization
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@attribute [Authorize]
+
+
+<PageTitle>@(Id.HasValue ? "Edit API" : "Add API")</PageTitle>
+
+   @if (isError)
+   {
+    <div class="alert alert-danger">Internal Server Error. Please call administrator</div>
+    }
+
+@if (_editContext is not null)
+{
+    
+
+<EditForm  EditContext="_editContext" OnSubmit="@SaveForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <a class="nav-link @(CurrentStep == 1 ? "active" : "")" @onclick="() => SetStep(1)">Main Info</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(CurrentStep == 2 ? "active" : "")" @onclick="() => SetStep(2)">API Headers</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(CurrentStep == 3 ? "active" : "")" @onclick="() => SetStep(3)">API Mapping</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body">
+            @if (CurrentStep == 1)
+            {
+
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Name</label>
+                    <InputText @bind-Value="ApiForm.Title" class="form-control" />
+                   </div>
+
+
+                   <div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Description</label>
+                    <InputText @bind-Value="ApiForm.Description" class="form-control" />
+                   </div>
+
+                </div>
+
+   
+
+                <div class="row">
+                     <div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">URL</label>
+                    <InputText @bind-Value="ApiForm.Url" class="form-control" />
+                </div>
+
+
+                 <div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">API Body</label>
+                    <InputText @bind-Value="ApiForm.ApiBody" class="form-control" />
+                </div>
+                </div>
+
+
+                <div class="row">
+                     <div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">API Response</label>
+                    <InputText @bind-Value="ApiForm.ApiResponse" class="form-control" />
+                </div>
+
+                 <div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Server Ip</label>
+                    <InputText @bind-Value="ApiForm.ServerIp" class="form-control" />
+                </div>
+                </div>
+
+
+
+                
+                <div class="row"> <div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Database Name</label>
+                    <InputText @bind-Value="ApiForm.DatabaseName" class="form-control" />
+                </div>
+
+
+                  <div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Table Name</label>
+                    <InputText @bind-Value="ApiForm.TableName" class="form-control" />
+                </div></div>
+                <div class="row"><div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Database User Name</label>
+                    <InputText @bind-Value="ApiForm.DatabaseUserName" class="form-control" />
+                </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Schema Name</label>
+                    <InputText @bind-Value="ApiForm.SchemaName" class="form-control" />
+                </div></div>
+                <div class="row"><div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Database User Password</label>
+                    <InputText @bind-Value="ApiForm.DatabaseUserPassword" class="form-control" type="password"/>
+                </div>
+
+                  <div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Connection String</label>
+                    <InputText @bind-Value="ApiForm.ConnectionString" class="form-control" 
+                     placeholder="Server=xxxx;Database=yyy;User Id=zzz;Password=pp;Trusted_Connection=False;MultipleActiveResultSets=true;TrustServerCertificate=True"/>
+                </div></div>
+                <div class="row">
+                <div class="col-md-6 mb-3">
+                <label for="exampleFormControlInput4" class="form-label">Methode Type</label>
+                <InputSelect @bind-Value="ApiForm.MethodeType" class="form-select">
+                    @foreach (ApiMethodeType type in Enum.GetValues(typeof(ApiMethodeType)))
+                    {
+                        <option value="@type">@type</option>
+                    }
+                </InputSelect>
+                    </div>
+                    
+                   <div class="col-md-6 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Server Port</label>
+                    <InputText @bind-Value="ApiForm.ServerPort" class="form-control" />
+                    </div>
+                
+                
+                </div>
+
+
+                 <div class="row">
+                <div class="col-md-6 mb-3">
+                <label for="exampleFormControlInput4" class="form-label">DataBase Type</label>
+                <InputSelect @bind-Value="ApiForm.DatabaseType" class="form-select">
+                    @foreach (DatabaseType type in Enum.GetValues(typeof(DatabaseType)))
+                    {
+                        <option value="@type">@type</option>
+                    }
+                </InputSelect>
+                    </div>
+                    
+               
+                         
+                </div>
+
+
+            }
+            else if (CurrentStep == 2)
+            {
+                @if(ApiForm?.ApiHeaders != null )
+                {
+                     @foreach (var header in ApiForm.ApiHeaders)
+                   {
+                    <div class="row mb-2">
+                  <div class="col-md-5">
+                    <InputText @bind-Value="header.HeaderKey" class="form-control" placeholder="Header Key" />
+                   </div>
+                   <div class="col-md-5">
+                    <InputText @bind-Value="header.HeaderValue" class="form-control" placeholder="Header Value" />
+                   </div>
+                   <div class="col-md-2">
+                    <button type="button" class="btn btn-danger" @onclick="() => RemoveHeader(header)">Remove</button>
+                   </div>
+                   </div>
+                 }
+                }
+               
+
+                <button  class="btn btn-primary mb-3" type="button" @onclick="AddHeader">+ Add Header</button>
+            }
+            else if (CurrentStep == 3)
+            {
+               @if(ApiForm?.ApiMaps != null )
+                {
+                     @foreach (var map in ApiForm.ApiMaps)
+                   {
+                    <div class="row mb-2">
+                  <div class="col-md-3">
+                    <InputText @bind-Value="map.FromKey" class="form-control" placeholder="From Key" />
+                   </div>
+                   <div class="col-md-3">
+                    <InputText @bind-Value="map.MapKey" class="form-control" placeholder="Map key" />
+                   </div>
+
+                   @if(ApiForm.DatabaseType == DatabaseType.SQLServer)
+                   {
+                       <div class="col-md-3">
+                      <InputSelect @bind-Value="map.DataType" class="form-select">
+                       @foreach (SqlServerDataType type in Enum.GetValues(typeof(SqlServerDataType)))
+                       {
+                           <option value="@type.ToString()">@type</option>
+                       }
+                       </InputSelect>
+                      </div>
+                   }
+
+                   else
+                   {
+                       <div class="col-md-3">
+                      <InputSelect @bind-Value="map.DataType" class="form-select">
+                       @foreach (OracleDataType type in Enum.GetValues(typeof(OracleDataType)))
+                       {
+                           <option value="@type.ToString()">@type</option>
+                       }
+                       </InputSelect>
+                      </div>
+                   }
+                   
+ 
+
+                   <div class="col-md-3">
+                    <button type="button" class="btn btn-danger" @onclick="() => RemoveMap(map)">Remove</button>
+                   </div>
+                   </div>
+                 }
+                }
+               
+
+                <button  class="btn btn-primary mb-3" type="button" @onclick="AddMap">+ Add Map</button>
+            }
+
+            <div class="mt-3 d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" @onclick="PrevStep" disabled="@(CurrentStep == 1)">Back</button>
+                @if (CurrentStep < 3)
+                {
+                    <button type="button" class="btn btn-primary" @onclick="NextStep">Next</button>
+                }
+                else
+                {
+                  <button class="btn btn-success" type="submit" disabled="@(!_isFormValid)">Submit</button>
+                }
+            </div>
+        </div>
+    </div>
+</EditForm>
+}
