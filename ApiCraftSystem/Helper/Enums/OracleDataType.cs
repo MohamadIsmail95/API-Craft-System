@@ -37,7 +37,8 @@
         // Other
         XmlType,
         Json,          // Oracle 21c and later
-        Udt            // User-defined type
+        Udt,
+        Boolean// User-defined type
     }
 
 }

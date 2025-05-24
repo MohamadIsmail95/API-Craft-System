@@ -48,6 +48,8 @@ namespace ApiCraftSystem
             builder.Services.AddAutoMapper(typeof(MappingProfile));
             builder.Services.AddHttpContextAccessor();
 
+            builder.Services.AddHttpClient(); // Basic registration
+
 
             var app = builder.Build();
 

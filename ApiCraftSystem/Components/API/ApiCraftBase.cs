@@ -15,8 +15,9 @@ namespace ApiCraftSystem.Components.API
         protected Timer _searchDebounceTimer;
         protected List<ApiStoreListDto> apis = new List<ApiStoreListDto>();
         protected bool showConfirmation = false;
-        protected Guid? deleteId = null;
-
+        protected Guid? apiId = null;
+        protected bool? result = null;
+        protected bool isDeletedOpt = false;
         protected override async Task OnInitializedAsync()
         {
             await LoadApis(PagingRequest);
@@ -104,25 +105,46 @@ namespace ApiCraftSystem.Components.API
 
             await LoadApis(PagingRequest);
         }
-        protected void PromptDelete(Guid id)
+        protected void PromptOperation(Guid id, bool isDelete)
         {
-            deleteId = id;
+            isDeletedOpt = isDelete;
+            apiId = id;
             showConfirmation = true;
         }
         protected void CloseConfirmation()
         {
             showConfirmation = false;
-            deleteId = null;
+            apiId = null;
         }
-        protected async Task ConfirmDelete()
+        protected async Task ConfirmOperation()
         {
-            if (deleteId.HasValue)
+            try
             {
-                await Delete(deleteId.Value);
+                if (apiId.HasValue)
+                {
+                    if (isDeletedOpt)
+                    {
+                        await Delete(apiId.Value);
+
+                    }
+                    else
+                    {
+                        var apiDto = await _apiService.GetByIdAsync(apiId.Value);
+                        result = await _apiService.FetchAndMap(apiDto);
+
+
+                    }
+                }
+
+                showConfirmation = false;
+                apiId = null;
+            }
+            catch (Exception ex)
+            {
+
+                result = false;
             }
 
-            showConfirmation = false;
-            deleteId = null;
         }
     }
 }

@@ -119,6 +119,7 @@
                     <InputText @bind-Value="ApiForm.ConnectionString" class="form-control" 
                      placeholder="Server=xxxx;Database=yyy;User Id=zzz;Password=pp;Trusted_Connection=False;MultipleActiveResultSets=true;TrustServerCertificate=True"/>
                 </div></div>
+
                 <div class="row">
                 <div class="col-md-6 mb-3">
                 <label for="exampleFormControlInput4" class="form-label">Methode Type</label>
@@ -151,8 +152,32 @@
                     </div>
                     
                
+
+                     <div class="col-md-6 mb-3">
+                <label for="exampleFormControlInput4" class="form-label">Authentication  Type</label>
+                <InputSelect @bind-Value="ApiForm.ApiAuthType" class="form-select">
+                    @foreach (ApiAuthType type in Enum.GetValues(typeof(ApiAuthType)))
+                    {
+                        <option value="@type">@type</option>
+                    }
+                </InputSelect>
+                    </div>
+
                          
                 </div>
+
+
+                @if(ApiForm.ApiAuthType == ApiAuthType.Bearer)
+                {
+                      <div class="row">
+                     <div class="col-md-12 mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Bearer Token</label>
+                    <InputTextArea  @bind-Value="ApiForm.BearerToken" class="form-control" rows="4"/>
+                    </div>
+                  </div>
+                        
+                 }
+                  
 
 
             }
@@ -187,10 +212,10 @@
                    {
                     <div class="row mb-2">
                   <div class="col-md-3">
-                    <InputText @bind-Value="map.FromKey" class="form-control" placeholder="From Key" />
+                    <InputText @bind-Value="map.FromKey" class="form-control" placeholder="Json Path" />
                    </div>
                    <div class="col-md-3">
-                    <InputText @bind-Value="map.MapKey" class="form-control" placeholder="Map key" />
+                    <InputText @bind-Value="map.MapKey" class="form-control" placeholder="Column Name" />
                    </div>
 
                    @if(ApiForm.DatabaseType == DatabaseType.SQLServer)

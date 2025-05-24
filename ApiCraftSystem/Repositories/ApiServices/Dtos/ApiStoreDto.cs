@@ -35,6 +35,11 @@ namespace ApiCraftSystem.Repositories.ApiServices.Dtos
 
         public ApiMethodeType MethodeType { get; set; }
 
+        public ApiAuthType ApiAuthType { get; set; } = ApiAuthType.None;
+
+        public string? BearerToken { get; set; } = string.Empty;
+
+
         [Required]
         public DatabaseType DatabaseType { get; set; } = DatabaseType.SQLServer;
 

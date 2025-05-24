@@ -34,6 +34,11 @@ namespace ApiCraftSystem.Model
 
         [Required]
         public DatabaseType DatabaseType { get; set; } = DatabaseType.SQLServer;
+
+        public ApiAuthType ApiAuthType { get; set; } = ApiAuthType.None;
+
+        public string? BearerToken { get; set; } = string.Empty;
+
         public bool IsDeleted { get; set; } = false;
 
 

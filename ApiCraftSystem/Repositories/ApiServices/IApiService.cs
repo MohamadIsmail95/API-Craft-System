@@ -10,7 +10,6 @@ namespace ApiCraftSystem.Repositories.ApiServices
         Task UpdateAsync(ApiStoreDto input);
         Task<ApiStoreListDto> DeleteAsync(Guid id);
         Task<ApiStoreDto> GetByIdAsync(Guid id);
-
-
+        Task<bool> FetchAndMap(ApiStoreDto input);
     }
 }

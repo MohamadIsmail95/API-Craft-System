@@ -10,6 +10,26 @@
 
 <PageTitle>Api Craft</PageTitle>
 
+@if (result == true)
+{
+    <div class="alert alert-success" role="alert">
+        The operation was completed successfully
+    </div>
+ 
+}
+
+
+
+@if (result == false)
+{
+    <div class="alert alert-danger" role="alert">
+        The operation was faild , please contact with administrator
+    </div>
+
+
+    
+}
+
 
 @if(apis == null)
 {
@@ -82,8 +102,8 @@ else
                                     <td>@api.MethodeType</td>
                                 <td>
                                         <button class="btn btn-primary btn-sm" @onclick="@(() => NavigationManager.NavigateTo("/api-form/" + api.Id))"><i class="bi bi-pencil-square"></i></button>
-                                        <button class="btn btn-danger btn-sm" @onclick="() => PromptDelete(api.Id)"><i class="bi bi-trash"></i></button>
-                                        <button class="btn btn-danger btn-sm"><i class="bi bi-gear-wide-connected"></i></button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => PromptOperation(api.Id ,true)"><i class="bi bi-trash"></i></button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => PromptOperation(api.Id, false)"><i class="bi bi-gear-wide-connected"></i></button>
                                         
 
                                 </td>
@@ -127,17 +147,19 @@ else
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Confirm Delete</h5>
+                    <h5 class="modal-title">Confirmation message</h5>
                     <button type="button" class="btn-close" @onclick="CloseConfirmation"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to delete this item?</p>
+                    <p>Are you sure you want to continue this operation?</p>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="CloseConfirmation">Cancel</button>
-                    <button class="btn btn-danger" @onclick="ConfirmDelete">Delete</button>
+                    <button class="btn btn-danger" @onclick="ConfirmOperation">continue</button>
                 </div>
             </div>
         </div>
     </div>
 }
+
+
