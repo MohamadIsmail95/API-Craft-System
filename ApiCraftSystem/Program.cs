@@ -50,6 +50,8 @@ namespace ApiCraftSystem
 
             builder.Services.AddHttpClient(); // Basic registration
 
+            builder.Services.AddControllers(); // <--- Required for API support
+
 
             var app = builder.Build();
 
@@ -70,6 +72,8 @@ namespace ApiCraftSystem
             app.UseAntiforgery();
 
             app.MapStaticAssets();
+            app.MapControllers(); // <--- Maps your API endpoints
+
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
 

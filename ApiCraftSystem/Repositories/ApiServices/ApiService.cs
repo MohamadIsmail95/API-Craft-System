@@ -1,4 +1,5 @@
 ﻿using ApiCraftSystem.Data;
+using ApiCraftSystem.Helper;
 using ApiCraftSystem.Helper.Enums;
 using ApiCraftSystem.Model;
 using ApiCraftSystem.Repositories.ApiServices.Dtos;
@@ -165,21 +166,21 @@ namespace ApiCraftSystem.Repositories.ApiServices
         }
         public async Task<bool> FetchAndMap(ApiStoreDto input)
         {
-            // Determine HTTP method
+
+            await CreateDynamicTableAsync(input);
+
             var method = string.Equals(input.MethodeType.ToString(), "POST", StringComparison.OrdinalIgnoreCase)
                 ? HttpMethod.Post
                 : HttpMethod.Get;
 
             var handler = new HttpClientHandler();
             if (input.ApiAuthType == ApiAuthType.Windows)
-            {
                 handler.UseDefaultCredentials = true;
-            }
 
             using var client = new HttpClient(handler);
             var request = new HttpRequestMessage(method, input.Url);
 
-            // Add headers
+            // Headers
             if (input.ApiHeaders != null)
             {
                 foreach (var header in input.ApiHeaders)
@@ -188,13 +189,13 @@ namespace ApiCraftSystem.Repositories.ApiServices
                 }
             }
 
-            // Auth
+            // Bearer Token Auth
             if (input.ApiAuthType == ApiAuthType.Bearer && !string.IsNullOrWhiteSpace(input.BearerToken))
             {
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", input.BearerToken);
             }
 
-            // Add POST body
+            // Body for POST
             if (method == HttpMethod.Post && !string.IsNullOrWhiteSpace(input.ApiBody))
             {
                 request.Content = new StringContent(input.ApiBody, Encoding.UTF8, "application/json");
@@ -206,36 +207,24 @@ namespace ApiCraftSystem.Repositories.ApiServices
             var content = await response.Content.ReadAsStringAsync();
             var rootJson = JToken.Parse(content);
 
-            // Detect if response is array or single object
-            var records = new List<JToken>();
+            // STEP 1: Gather all records from root using unique root paths
+            var allRecords = new List<JToken>();
+            var rootPaths = input.ApiMaps
+                                 .Select(m => ParseObject.ExtractRootPath(m.FromKey))
+                                 .Distinct();
 
-            if (rootJson.Type == JTokenType.Array)
+            foreach (var rootPath in rootPaths)
             {
-                records = rootJson.ToList();
-            }
-            else if (rootJson.Type == JTokenType.Object)
-            {
-                // Optional: use input.ArrayPath if provided
-                var arrayPath = input.ApiMaps?.FirstOrDefault(); // Assuming List<KeyValue> with a 'Key' property
-                if (arrayPath != null)
-                {
-                    var path = arrayPath.FromKey;
-                    var arrayToken = rootJson.SelectToken(path);
-
-                    if (arrayToken is JArray array)
-                        records = array.ToList();
-                    else if (arrayToken is JObject obj)
-                        records.Add(obj);
-                }
-                else
-                {
-                    records.Add(rootJson);
-                }
+                var tokens = ParseObject.GetRootArray(rootJson, rootPath);
+                allRecords.AddRange(tokens);
             }
 
-            if (!records.Any()) return false;
+            if (!allRecords.Any()) return false;
 
-            foreach (var item in records)
+            using IDbConnection db = CreateDbConnection(input.DatabaseType, input.ConnectionString);
+
+            // STEP 2: Iterate each root item and map fields
+            foreach (var item in allRecords)
             {
                 var parameters = new DynamicParameters();
                 var columns = new List<string>();
@@ -243,90 +232,28 @@ namespace ApiCraftSystem.Repositories.ApiServices
 
                 foreach (var mapping in input.ApiMaps)
                 {
-                    var tokenValue = GetNestedToken(item, mapping.FromKey);
+                    var extracted = ParseObject.ResolveWildcardValues(item, ParseObject.GetLastCleanSegment(mapping.FromKey));
+                    var first = extracted.FirstOrDefault();
 
-                    if (tokenValue != null)
+                    if (first != null)
                     {
                         columns.Add(mapping.MapKey);
                         values.Add("@" + mapping.MapKey);
-                        parameters.Add(mapping.MapKey, tokenValue.ToString());
+                        parameters.Add(mapping.MapKey, first);
                     }
                 }
 
-                var sql = $@"
-            INSERT INTO {input.TableName}
-            ({string.Join(", ", columns)})
-            VALUES ({string.Join(", ", values)})
-        ";
+                if (columns.Count == 0) continue;
 
+                var sql = $@"INSERT INTO {input.TableName} ({string.Join(", ", columns)})
+                     VALUES ({string.Join(", ", values)})";
 
-                //var finalSql = sql;
-                //foreach (var paramName in parameters.ParameterNames)
-                //{
-                //    var value = parameters.Get<dynamic>(paramName);
-                //    string formattedValue = value is string || value is DateTime
-                //        ? $"'{value}'"
-                //        : value?.ToString() ?? "NULL";
-
-                //    finalSql = finalSql.Replace("@" + paramName, formattedValue);
-                //}
-
-                //Console.WriteLine("Generated SQL:");
-                //Console.WriteLine(finalSql);
-
-
-                if (string.IsNullOrWhiteSpace(input.ConnectionString))
-                    throw new ArgumentException("Connection string cannot be null or empty.");
-
-                if (input.DatabaseType != DatabaseType.SQLServer && input.DatabaseType != DatabaseType.Oracle)
-                    throw new NotSupportedException("Unsupported database type.");
-
-                using IDbConnection db = CreateDbConnection(input.DatabaseType, input.ConnectionString);
                 await db.ExecuteAsync(sql, parameters);
             }
 
             return true;
         }
 
-        private static JToken? GetNestedToken(JToken token, string path)
-        {
-            if (token == null || string.IsNullOrWhiteSpace(path)) return null;
-
-            var segments = path.Split('.');
-
-            foreach (var segment in segments)
-            {
-                if (token == null) return null;
-
-                // If token is array, take the first object
-                if (token.Type == JTokenType.Array)
-                {
-                    token = token.FirstOrDefault();
-                    if (token == null || token.Type != JTokenType.Object)
-                        return null;
-                }
-
-                // If token is object, try to access property
-                if (token.Type == JTokenType.Object)
-                {
-                    token = token[segment];
-                }
-                else
-                {
-                    return null;
-                }
-            }
-
-            return token;
-        }
-        private string SanitizeTableName(string tableName)
-        {
-            // Allow only alphanumeric and underscore
-            if (Regex.IsMatch(tableName, @"^[a-zA-Z0-9_]+$"))
-                return tableName;
-
-            throw new ArgumentException("Invalid table name.");
-        }
         private async Task UpdateApiStoreInfoAsync(ApiStoreDto input)
         {
             var store = await _db.ApiStores.FindAsync(input.Id);
@@ -368,34 +295,6 @@ namespace ApiCraftSystem.Repositories.ApiServices
                 await _db.ApiMaps.AddRangeAsync(newMaps);
                 await _db.SaveChangesAsync();
             }
-        }
-        private async Task<bool> TableExistsSqlServerAsync(ApiStoreDto input)
-        {
-            using var connection = new SqlConnection(input.ConnectionString);
-
-            string sql = @"
-              SELECT CASE 
-              WHEN EXISTS (
-              SELECT * FROM INFORMATION_SCHEMA.TABLES 
-              WHERE TABLE_NAME = @TableName
-              ) 
-              THEN 1 ELSE 0 
-              END";
-
-            int exists = await connection.ExecuteScalarAsync<int>(sql, new { TableName = input.TableName });
-            return exists == 1;
-        }
-        private async Task<bool> TableExistsOracleAsync(ApiStoreDto input)
-        {
-            using IDbConnection db = new OracleConnection(input.ConnectionString);
-
-            string sql = @"
-            SELECT COUNT(*) 
-            FROM USER_TABLES 
-            WHERE TABLE_NAME = UPPER(:TableName)";
-
-            int count = await db.ExecuteScalarAsync<int>(sql, new { TableName = input.TableName });
-            return count > 0;
         }
         private async Task CreateDynamicTableAsync(ApiStoreDto input)
         {

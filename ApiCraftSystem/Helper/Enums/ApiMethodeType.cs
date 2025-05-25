@@ -2,6 +2,6 @@
 {
     public enum ApiMethodeType
     {
-        Post, Put, Get, Delete
+        Post, Get
     }
 }
