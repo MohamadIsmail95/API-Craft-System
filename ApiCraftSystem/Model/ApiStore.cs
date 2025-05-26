@@ -39,6 +39,8 @@ namespace ApiCraftSystem.Model
 
         public string? BearerToken { get; set; } = string.Empty;
 
+        public string PrifixRoot { get; set; } = string.Empty;
+
         public bool IsDeleted { get; set; } = false;
 
 

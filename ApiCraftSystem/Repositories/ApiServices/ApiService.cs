@@ -210,7 +210,7 @@ namespace ApiCraftSystem.Repositories.ApiServices
             // STEP 1: Gather all records from root using unique root paths
             var allRecords = new List<JToken>();
             var rootPaths = input.ApiMaps
-                                 .Select(m => ParseObject.ExtractRootPath(m.FromKey))
+                                 .Select(m => ParseObject.ExtractRootPath($"{input.PrifixRoot}.{m.FromKey}"))
                                  .Distinct();
 
             foreach (var rootPath in rootPaths)
@@ -232,7 +232,14 @@ namespace ApiCraftSystem.Repositories.ApiServices
 
                 foreach (var mapping in input.ApiMaps)
                 {
-                    var extracted = ParseObject.ResolveWildcardValues(item, ParseObject.GetLastCleanSegment(mapping.FromKey));
+                    string prefix = input.PrifixRoot?.Trim('.').Trim() ?? string.Empty;
+                    string fromKey = mapping.FromKey?.Trim('.') ?? string.Empty;
+
+                    string concatFromKey = string.IsNullOrWhiteSpace(prefix)
+                        ? fromKey
+                        : $"{prefix}.{fromKey}";
+
+                    var extracted = ParseObject.ResolveWildcardValues(item, ParseObject.GetLastCleanSegment(concatFromKey));
                     var first = extracted.FirstOrDefault();
 
                     if (first != null)
@@ -252,6 +259,55 @@ namespace ApiCraftSystem.Repositories.ApiServices
             }
 
             return true;
+        }
+        public async Task ReCreateDynamicTableAsync(ApiStoreDto input)
+        {
+            if (string.IsNullOrWhiteSpace(input.ConnectionString))
+                throw new ArgumentException("Connection string cannot be null or empty.");
+
+            if (input.DatabaseType != DatabaseType.SQLServer && input.DatabaseType != DatabaseType.Oracle)
+                throw new NotSupportedException("Unsupported database type.");
+
+            using IDbConnection db = CreateDbConnection(input.DatabaseType, input.ConnectionString);
+
+            string tableName = EscapeIdentifier(input.TableName, input.DatabaseType);
+
+            var columnDefinitions = input.ApiMaps.Select(m =>
+                $"{EscapeIdentifier(m.MapKey, input.DatabaseType)} {MapToDbType(m.DataType, input.DatabaseType)}");
+
+            string createTableSql = input.DatabaseType switch
+            {
+                DatabaseType.SQLServer => $@"
+            IF OBJECT_ID(N'{tableName}', N'U') IS NOT NULL
+            BEGIN
+                DROP TABLE {tableName};
+            END;
+
+            CREATE TABLE {tableName} (
+                SId INT PRIMARY KEY IDENTITY(1,1),
+                {string.Join(",\n", columnDefinitions)}
+            );",
+
+                DatabaseType.Oracle => $@"
+            DECLARE
+                v_count NUMBER;
+            BEGIN
+                SELECT COUNT(*) INTO v_count FROM user_tables WHERE table_name = UPPER('{tableName}');
+                IF v_count > 0 THEN
+                    EXECUTE IMMEDIATE 'DROP TABLE {tableName} CASCADE CONSTRAINTS';
+                END IF;
+
+                EXECUTE IMMEDIATE '
+                    CREATE TABLE {tableName} (
+                        SId NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                        {string.Join(",", columnDefinitions)}
+                    )';
+            END;",
+
+                _ => throw new NotSupportedException("Unsupported database type.")
+            };
+
+            await db.ExecuteAsync(createTableSql);
         }
 
         private async Task UpdateApiStoreInfoAsync(ApiStoreDto input)

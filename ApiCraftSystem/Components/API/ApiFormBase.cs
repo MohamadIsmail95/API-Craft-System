@@ -2,6 +2,7 @@
 using ApiCraftSystem.Repositories.ApiServices.Dtos;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 
 namespace ApiCraftSystem.Components.API
 {
@@ -9,8 +10,8 @@ namespace ApiCraftSystem.Components.API
     {
         [Inject] protected IApiService _apiService { get; set; }
         [Inject] protected NavigationManager _navigationManager { get; set; }
+        [Inject] protected IJSRuntime JSRuntime { get; set; }
         [Parameter] public Guid? Id { get; set; }
-
         protected ApiStoreDto ApiForm = new ApiStoreDto();
         [Parameter] public EventCallback<ApiStoreDto> OnSubmit { get; set; }
 
@@ -21,6 +22,9 @@ namespace ApiCraftSystem.Components.API
         protected bool _isFormValid = false;
 
         protected bool isError = false;
+
+
+
         protected override async Task OnInitializedAsync()
         {
             SetContext();
@@ -97,6 +101,14 @@ namespace ApiCraftSystem.Components.API
                 StateHasChanged(); // Refresh UI
             };
 
+        }
+        protected async Task BeautifyJson()
+        {
+            await JSRuntime.InvokeVoidAsync("beautifyJson", "apiBody");
+        }
+        protected async Task RecreateTableAPI()
+        {
+            await _apiService.ReCreateDynamicTableAsync(ApiForm);
         }
     }
 }

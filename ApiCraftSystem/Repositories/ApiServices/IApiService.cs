@@ -11,5 +11,6 @@ namespace ApiCraftSystem.Repositories.ApiServices
         Task<ApiStoreListDto> DeleteAsync(Guid id);
         Task<ApiStoreDto> GetByIdAsync(Guid id);
         Task<bool> FetchAndMap(ApiStoreDto input);
+        Task ReCreateDynamicTableAsync(ApiStoreDto input);
     }
 }

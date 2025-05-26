@@ -39,6 +39,7 @@ namespace ApiCraftSystem.Repositories.ApiServices.Dtos
 
         public string? BearerToken { get; set; } = string.Empty;
 
+        public string PrifixRoot { get; set; } = string.Empty;
 
         [Required]
         public DatabaseType DatabaseType { get; set; } = DatabaseType.SQLServer;

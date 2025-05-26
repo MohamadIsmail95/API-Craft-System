@@ -8,7 +8,6 @@
 
         public string Date { get; set; } = string.Empty;
     }
-
     public class ColsDto
     {
         public int Id { get; set; }
@@ -27,7 +26,6 @@
             Description = description;
         }
     }
-
     public class RowsDto
     {
         public int Id { get; set; }

@@ -4,6 +4,7 @@ using ApiCraftSystem.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ApiCraftSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250526100447_edit-apistoreEntity-addPrifix")]
+    partial class editapistoreEntityaddPrifix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -111,7 +114,7 @@ namespace ApiCraftSystem.Migrations
 
                     b.HasIndex("ApiStoreId");
 
-                    b.ToTable("ApiHeaders", (string)null);
+                    b.ToTable("ApiHeaders");
                 });
 
             modelBuilder.Entity("ApiCraftSystem.Model.ApiMap", b =>
@@ -142,7 +145,7 @@ namespace ApiCraftSystem.Migrations
 
                     b.HasIndex("ApiStoreId");
 
-                    b.ToTable("ApiMaps", (string)null);
+                    b.ToTable("ApiMaps");
                 });
 
             modelBuilder.Entity("ApiCraftSystem.Model.ApiStore", b =>
@@ -233,7 +236,7 @@ namespace ApiCraftSystem.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ApiStores", (string)null);
+                    b.ToTable("ApiStores");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
