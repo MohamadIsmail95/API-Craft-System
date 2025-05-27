@@ -143,6 +143,15 @@ else
 
 @if (showConfirmation)
 {
+    @if (isFinish)
+    {
+        <div class="text-center">
+            <div class="spinner-grow" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+   
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -155,7 +164,15 @@ else
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="CloseConfirmation">Cancel</button>
-                    <button class="btn btn-danger" @onclick="ConfirmOperation">continue</button>
+                    <button class="btn btn-danger" @onclick="ConfirmOperation" disabled="@isFinish">
+                        Continue
+                        @if (@isFinish)
+                        {
+                            <span class="spinner-border spinner-border-sm"></span>
+                            
+                         }
+               
+                    </button>
                 </div>
             </div>
         </div>

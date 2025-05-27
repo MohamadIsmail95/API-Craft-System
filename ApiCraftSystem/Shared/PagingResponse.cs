@@ -2,7 +2,7 @@
 {
     public class PagingResponse
     {
-        public object Data { get; set; }
+        public object? Data { get; set; }
         public int TotalPages { get; set; }
         public int TotalCount { get; set; }
 

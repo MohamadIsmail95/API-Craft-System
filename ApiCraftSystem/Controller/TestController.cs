@@ -10,8 +10,7 @@ namespace ApiCraftSystem.Controller
     {
 
         [HttpGet("T1")]
-
-        public async Task<IActionResult> GetAction()
+        public IActionResult GetAction()
         {
             ComplexObjDto complexObjDto = new ComplexObjDto();
             complexObjDto.Rows = [];
@@ -31,5 +30,15 @@ namespace ApiCraftSystem.Controller
             return Ok(new { Data = complexObjDto });
 
         }
+
+        [HttpGet("GetEmployees")]
+        public IActionResult GetEmployees()
+        {
+            Employee employee = new Employee(1, "Mohammad", "Test", 30, DateTime.Now);
+
+            return Ok(employee);
+
+        }
+
     }
 }

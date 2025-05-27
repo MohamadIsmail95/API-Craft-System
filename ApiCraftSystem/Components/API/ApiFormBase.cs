@@ -12,7 +12,9 @@ namespace ApiCraftSystem.Components.API
         [Inject] protected NavigationManager _navigationManager { get; set; }
         [Inject] protected IJSRuntime JSRuntime { get; set; }
         [Parameter] public Guid? Id { get; set; }
+
         protected ApiStoreDto ApiForm = new ApiStoreDto();
+
         [Parameter] public EventCallback<ApiStoreDto> OnSubmit { get; set; }
 
         protected int CurrentStep = 1;
@@ -22,7 +24,10 @@ namespace ApiCraftSystem.Components.API
         protected bool _isFormValid = false;
 
         protected bool isError = false;
+        protected bool IsSave { get; set; } = false;
+        protected bool IsReCreate { get; set; } = false;
 
+        private CancellationTokenSource _cts = new();
 
 
         protected override async Task OnInitializedAsync()
@@ -41,40 +46,56 @@ namespace ApiCraftSystem.Components.API
         }
         protected async Task SaveForm()
         {
+            await SaveFormAsync(_cts.Token);
+        }
+        protected async Task SaveFormAsync(CancellationToken cancellationToken = default)
+        {
             try
             {
+                IsSave = false;
+                isError = false;
+
+                if (ApiForm == null)
+                {
+                    throw new ArgumentNullException(nameof(ApiForm));
+                }
+
                 if (Id.HasValue)
                 {
                     ApiForm.Id = Id.Value;
-                    await _apiService.UpdateAsync(ApiForm);
+                    await _apiService.UpdateAsync(ApiForm, cancellationToken);
                 }
                 else
                 {
-
-                    await _apiService.CreateAsync(ApiForm);
-
+                    await _apiService.CreateAsync(ApiForm, cancellationToken);
                 }
 
-                _navigationManager.NavigateTo("/Api-Craft"); // Go back to list
+                IsSave = true;
+                _navigationManager.NavigateTo("/Api-Craft");
+            }
+            catch (OperationCanceledException)
+            {
+                // Optional: handle cancellation separately
+                isError = true;
+                // You could show a message: "Operation was canceled."
             }
             catch (Exception ex)
             {
                 isError = true;
+                // Log the error or show feedback to the user
+                Console.Error.WriteLine($"Error saving form: {ex.Message}");
             }
-
-
         }
         protected void SetStep(int step) => CurrentStep = step;
         protected void NextStep() => CurrentStep++;
         protected void PrevStep() => CurrentStep--;
-
         protected void RemoveHeader(ApiHeaderDto header)
         {
-            ApiForm.ApiHeaders.Remove(header);
+            ApiForm?.ApiHeaders?.Remove(header);
         }
         protected void AddHeader()
         {
-            ApiForm.ApiHeaders.Add(new ApiHeaderDto
+            ApiForm?.ApiHeaders?.Add(new ApiHeaderDto
             {
                 Id = Guid.NewGuid(),
                 ApiStoreId = ApiForm.Id
@@ -109,6 +130,8 @@ namespace ApiCraftSystem.Components.API
         protected async Task RecreateTableAPI()
         {
             await _apiService.ReCreateDynamicTableAsync(ApiForm);
+            IsReCreate = true;
+            _navigationManager.NavigateTo(_navigationManager.Uri, forceLoad: true);
         }
     }
 }

@@ -44,20 +44,20 @@ namespace ApiCraftSystem.Repositories.ApiServices
             _httpClient = httpClient;
         }
 
-        public async Task CreateAsync(ApiStoreDto input)
+        public async Task CreateAsync(ApiStoreDto input, CancellationToken cancellationToken = default)
         {
             var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             ApiStore api = _mapper.Map<ApiStore>(input);
             api.CreatedAt = DateTime.UtcNow;
             api.CreatedBy = Guid.Parse(userId);
-            await _db.ApiStores.AddAsync(api);
+            await _db.ApiStores.AddAsync(api, cancellationToken);
             await CreateDynamicTableAsync(input);
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(cancellationToken);
 
 
         }
-        public async Task<ApiStoreListDto> DeleteAsync(Guid id)
+        public async Task<ApiStoreListDto> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -66,8 +66,8 @@ namespace ApiCraftSystem.Repositories.ApiServices
                 .Include(x => x.ApiMaps)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
-            if (api == null)
-                return null;
+            if (api == null || string.IsNullOrEmpty(userId))
+                throw new Exception("ApiStore not found");
 
             api.IsDeleted = true;
             api.DeletedBy = Guid.Parse(userId);
@@ -95,7 +95,7 @@ namespace ApiCraftSystem.Repositories.ApiServices
 
             }
 
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(cancellationToken);
             return _mapper.Map<ApiStoreListDto>(api);
         }
         public async Task<ApiStoreDto> GetByIdAsync(Guid id)
@@ -103,7 +103,8 @@ namespace ApiCraftSystem.Repositories.ApiServices
             var api = await _db.ApiStores.Include(x => x.ApiHeaders).Include(x => x.ApiMaps).FirstOrDefaultAsync(x => x.Id == id);
 
             if (api == null)
-                return null;
+                throw new Exception("ApiStore not found");
+
 
             return _mapper.Map<ApiStoreDto>(api);
 
@@ -141,7 +142,7 @@ namespace ApiCraftSystem.Repositories.ApiServices
 
 
         }
-        public async Task UpdateAsync(ApiStoreDto dto)
+        public async Task UpdateAsync(ApiStoreDto dto, CancellationToken cancellationToken = default)
         {
             // Start a new transaction
             using var transaction = await _db.Database.BeginTransactionAsync();
@@ -154,12 +155,12 @@ namespace ApiCraftSystem.Repositories.ApiServices
                 await CreateDynamicTableAsync(dto);
 
                 // Commit the transaction if everything is successful
-                await transaction.CommitAsync();
+                await transaction.CommitAsync(cancellationToken);
             }
             catch (Exception)
             {
                 // Rollback if any error occurs
-                await transaction.RollbackAsync();
+                await transaction.RollbackAsync(cancellationToken);
                 throw; // Re-throw the exception to handle it further up the stack
             }
 
@@ -315,7 +316,7 @@ namespace ApiCraftSystem.Repositories.ApiServices
             var store = await _db.ApiStores.FindAsync(input.Id);
             var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (store == null)
+            if (store == null || string.IsNullOrEmpty(userId))
                 throw new Exception("ApiStore not found");
 
             _mapper.Map(input, store);

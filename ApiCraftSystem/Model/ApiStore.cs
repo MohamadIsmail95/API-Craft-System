@@ -44,7 +44,7 @@ namespace ApiCraftSystem.Model
         public bool IsDeleted { get; set; } = false;
 
 
-        public virtual ICollection<ApiHeader> ApiHeaders { get; set; }
-        public virtual ICollection<ApiMap> ApiMaps { get; set; }
+        public virtual ICollection<ApiHeader>? ApiHeaders { get; set; }
+        public virtual ICollection<ApiMap>? ApiMaps { get; set; }
     }
 }

@@ -18,6 +18,7 @@ namespace ApiCraftSystem.Components.API
         protected Guid? apiId = null;
         protected bool? result = null;
         protected bool isDeletedOpt = false;
+        protected bool isFinish = false;
         protected override async Task OnInitializedAsync()
         {
             await LoadApis(PagingRequest);
@@ -122,13 +123,18 @@ namespace ApiCraftSystem.Components.API
             {
                 if (apiId.HasValue)
                 {
+                    isFinish = true;
+
+
                     if (isDeletedOpt)
                     {
+
                         await Delete(apiId.Value);
 
                     }
                     else
                     {
+
                         var apiDto = await _apiService.GetByIdAsync(apiId.Value);
                         result = await _apiService.FetchAndMap(apiDto);
 
@@ -138,8 +144,10 @@ namespace ApiCraftSystem.Components.API
 
                 showConfirmation = false;
                 apiId = null;
+                isFinish = false;
+
             }
-            catch (Exception ex)
+            catch
             {
 
                 result = false;

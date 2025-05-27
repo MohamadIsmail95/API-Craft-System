@@ -19,8 +19,7 @@
 
 @if (_editContext is not null)
 {
-    
-
+ 
 <EditForm  EditContext="_editContext" OnSubmit="@SaveForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
@@ -48,6 +47,7 @@
         </div>
 
         <div class="card-body">
+  
             @if (CurrentStep == 1)
             {
 
@@ -290,8 +290,23 @@
                 else
                 {
                     <div>
-                         <button class="btn btn-success" type="submit" disabled="@(!_isFormValid)">Submit</button>
-                         <button class="btn btn-outline-info" type="button" @onclick="RecreateTableAPI">ReCreate</button>
+                     
+                         <button class="btn btn-success" type="submit" disabled="@(!_isFormValid)">
+                                @if(IsSave)
+                                {
+                                  <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+
+                                }
+
+                             Submit</button>
+                         <button class="btn btn-outline-info" type="button" @onclick="RecreateTableAPI">
+                          @if(IsReCreate)
+                           {
+                              <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+
+                           }
+
+                             ReCreate</button>
                     </div>
                  
 
