@@ -9,7 +9,7 @@ namespace ApiCraftSystem.Repositories.ApiServices.Dtos
         public string? Description { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
         public ApiMethodeType MethodeType { get; set; }
-
+        public JobPeriodic JobPeriodic { get; set; }
 
         public ApiStoreListDto() { }
 

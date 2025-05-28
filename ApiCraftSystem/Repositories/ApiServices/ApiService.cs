@@ -3,6 +3,7 @@ using ApiCraftSystem.Helper;
 using ApiCraftSystem.Helper.Enums;
 using ApiCraftSystem.Model;
 using ApiCraftSystem.Repositories.ApiServices.Dtos;
+using ApiCraftSystem.Repositories.SchedulerService;
 using ApiCraftSystem.Shared;
 using AutoMapper;
 using Dapper;
@@ -35,13 +36,16 @@ namespace ApiCraftSystem.Repositories.ApiServices
 
         private readonly HttpClient _httpClient;
 
+        private readonly ISchedulerService _schedulerService;
+
         public ApiService(ApplicationDbContext db, IMapper mapper, IHttpContextAccessor httpContextAccessor,
-            HttpClient httpClient)
+            HttpClient httpClient, ISchedulerService schedulerService)
         {
             _db = db;
             _mapper = mapper;
             _httpContextAccessor = httpContextAccessor;
             _httpClient = httpClient;
+            _schedulerService = schedulerService;
         }
 
         public async Task CreateAsync(ApiStoreDto input, CancellationToken cancellationToken = default)
@@ -51,6 +55,11 @@ namespace ApiCraftSystem.Repositories.ApiServices
             ApiStore api = _mapper.Map<ApiStore>(input);
             api.CreatedAt = DateTime.UtcNow;
             api.CreatedBy = Guid.Parse(userId);
+            if (input.JobPeriodic != null)
+            {
+                api.JobId = await _schedulerService.CreateScheduleAsync(input);
+
+            }
             await _db.ApiStores.AddAsync(api, cancellationToken);
             await CreateDynamicTableAsync(input);
             await _db.SaveChangesAsync(cancellationToken);
@@ -324,6 +333,8 @@ namespace ApiCraftSystem.Repositories.ApiServices
             store.ApiMaps = null;
             store.UpdatedBy = Guid.Parse(userId);
             store.UpdatedAt = DateTime.UtcNow;
+            store.JobId = await _schedulerService.CreateScheduleAsync(input);
+
             await _db.SaveChangesAsync();
         }
         private async Task UpdateApiStoreHeadersAsync(Guid apiStoreId, List<ApiHeaderDto> headers)

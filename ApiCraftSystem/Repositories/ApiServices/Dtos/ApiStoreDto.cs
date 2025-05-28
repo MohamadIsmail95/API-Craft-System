@@ -44,6 +44,10 @@ namespace ApiCraftSystem.Repositories.ApiServices.Dtos
         [Required]
         public DatabaseType DatabaseType { get; set; } = DatabaseType.SQLServer;
 
+        public string? JobId { get; set; } = string.Empty;
+
+        public JobPeriodic? JobPeriodic { get; set; } = null;
+
         public List<ApiHeaderDto>? ApiHeaders { get; set; } = new List<ApiHeaderDto>();
 
         [Required]

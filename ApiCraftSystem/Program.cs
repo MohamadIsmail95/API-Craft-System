@@ -1,8 +1,10 @@
 using ApiCraftSystem.Components;
 using ApiCraftSystem.Components.Account;
 using ApiCraftSystem.Data;
+using ApiCraftSystem.HangFire;
 using ApiCraftSystem.Helper.Mapper;
 using ApiCraftSystem.Repositories.ApiServices;
+using ApiCraftSystem.Repositories.SchedulerService;
 using Hangfire;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -25,6 +27,7 @@ namespace ApiCraftSystem
             builder.Services.AddScoped<IdentityRedirectManager>();
             builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
             builder.Services.AddScoped<IApiService, ApiService>();
+            builder.Services.AddScoped<ISchedulerService, SchedulerService>();
 
             builder.Services.AddAuthentication(options =>
                 {
@@ -59,7 +62,8 @@ namespace ApiCraftSystem
             config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
            .UseSimpleAssemblyNameTypeSerializer()
            .UseRecommendedSerializerSettings()
-           .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+           .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .UseActivator(new HangfireActivator(builder.Services.BuildServiceProvider())));
 
             builder.Services.AddHangfireServer();
 

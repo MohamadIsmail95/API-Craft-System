@@ -41,6 +41,10 @@ namespace ApiCraftSystem.Model
 
         public string PrifixRoot { get; set; } = string.Empty;
 
+        public string? JobId { get; set; } = string.Empty;
+
+        public JobPeriodic? JobPeriodic { get; set; }
+
         public bool IsDeleted { get; set; } = false;
 
 

@@ -36,10 +36,13 @@
                 <li class="nav-item">
                     <a class="nav-link @(CurrentStep == 3 ? "active" : "")" @onclick="() => SetStep(3)">API Mapping</a>
                 </li>
+                  <li class="nav-item">
+                    <a class="nav-link @(CurrentStep == 4 ? "active" : "")" @onclick="() => SetStep(4)">Schedualing</a>
+                </li>
                 @if(ApiForm.MethodeType == ApiMethodeType.Post)
                 {
                      <li class="nav-item">
-                    <a class="nav-link @(CurrentStep == 4 ? "active" : "")" @onclick="() => SetStep(4)">API Payload</a>
+                    <a class="nav-link @(CurrentStep == 5 ? "active" : "")" @onclick="() => SetStep(5)">API Payload</a>
                      </li>
                 }
               
@@ -271,7 +274,24 @@
 
                     <button  class="btn btn-primary mb-3" type="button" @onclick="AddMap">+ Add Map</button>
                 }
-            else if(CurrentStep == 4 && ApiForm.MethodeType == ApiMethodeType.Post)
+            else if(CurrentStep ==4)
+            {
+                  
+                <div class="row">
+                <div class="col-md-8">
+                <label for="exampleFormControlInput4" class="form-label">Periodic</label>
+                <InputSelect @bind-Value="ApiForm.JobPeriodic" class="form-select">
+                    @foreach (JobPeriodic job in Enum.GetValues(typeof(JobPeriodic)))
+                    {
+                        <option value="@job">@job</option>
+                    }
+                </InputSelect>
+                    </div>
+                    
+                       
+                </div>  
+            }
+            else if(CurrentStep == 5 && ApiForm.MethodeType == ApiMethodeType.Post)
             {
                     <div class="col-md-12 mb-3">
                   <label class="form-label">API Body</label>
