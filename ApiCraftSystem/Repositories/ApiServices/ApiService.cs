@@ -55,7 +55,7 @@ namespace ApiCraftSystem.Repositories.ApiServices
             ApiStore api = _mapper.Map<ApiStore>(input);
             api.CreatedAt = DateTime.UtcNow;
             api.CreatedBy = Guid.Parse(userId);
-            if (input.JobPeriodic != null)
+            if (input.JobPeriodic != null && (input.JobPeriodic != JobPeriodic.NA))
             {
                 api.JobId = await _schedulerService.CreateScheduleAsync(input);
 
@@ -103,7 +103,11 @@ namespace ApiCraftSystem.Repositories.ApiServices
                 }
 
             }
+            if (!string.IsNullOrEmpty(api.JobId))
+            {
+                await _schedulerService.RemoveSchedule(api.JobId);
 
+            }
             await _db.SaveChangesAsync(cancellationToken);
             return _mapper.Map<ApiStoreListDto>(api);
         }
@@ -162,6 +166,11 @@ namespace ApiCraftSystem.Repositories.ApiServices
                 await UpdateApiStoreHeadersAsync(dto.Id, dto.ApiHeaders ?? new());
                 await UpdateApiStoreMapsAsync(dto.Id, dto.ApiMaps ?? new());
                 await CreateDynamicTableAsync(dto);
+
+                if (dto.JobPeriodic == JobPeriodic.NA && !string.IsNullOrEmpty(dto.JobId))
+                {
+                    await _schedulerService.RemoveSchedule(dto.JobId);
+                }
 
                 // Commit the transaction if everything is successful
                 await transaction.CommitAsync(cancellationToken);

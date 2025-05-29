@@ -1,3 +1,4 @@
+using ApiCraftSystem.ActionFilters;
 using ApiCraftSystem.Components;
 using ApiCraftSystem.Components.Account;
 using ApiCraftSystem.Data;
@@ -67,6 +68,9 @@ namespace ApiCraftSystem
 
             builder.Services.AddHangfireServer();
 
+
+
+
             var app = builder.Build();
 
 
@@ -83,7 +87,10 @@ namespace ApiCraftSystem
             }
 
             // Use Hangfire dashboard
-            app.UseHangfireDashboard(); // /hangfire
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = new[] { new HangfireAuthorizationFilter() }
+            }); // /hangfire
 
             app.UseHttpsRedirection();
 

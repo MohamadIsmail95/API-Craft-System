@@ -275,7 +275,13 @@
                     <button  class="btn btn-primary mb-3" type="button" @onclick="AddMap">+ Add Map</button>
                 }
             else if(CurrentStep ==4)
-            {
+            {     
+                  @if(!string.IsNullOrEmpty(ApiForm.JobId))
+                    {
+                          <div class="row">
+                          <p>Job ID : @ApiForm.JobId</p>
+                          </div>
+                    }
                   
                 <div class="row">
                 <div class="col-md-8">
@@ -285,6 +291,8 @@
                     {
                         <option value="@job">@job</option>
                     }
+                     
+
                 </InputSelect>
                     </div>
                     
