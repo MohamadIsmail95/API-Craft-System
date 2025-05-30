@@ -5,12 +5,14 @@ using ApiCraftSystem.Data;
 using ApiCraftSystem.HangFire;
 using ApiCraftSystem.Helper.Mapper;
 using ApiCraftSystem.Repositories.ApiServices;
+using ApiCraftSystem.Repositories.GenericService;
 using ApiCraftSystem.Repositories.SchedulerService;
 using Hangfire;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
+using OfficeOpenXml;
+using System.ComponentModel;
 namespace ApiCraftSystem
 {
     public class Program
@@ -29,6 +31,8 @@ namespace ApiCraftSystem
             builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
             builder.Services.AddScoped<IApiService, ApiService>();
             builder.Services.AddScoped<ISchedulerService, SchedulerService>();
+            builder.Services.AddScoped<IDynamicDataService, DynamicDataService>();
+
 
             builder.Services.AddAuthentication(options =>
                 {
@@ -69,6 +73,15 @@ namespace ApiCraftSystem
             builder.Services.AddHangfireServer();
 
 
+            // Read EPPlus configuration
+            var epplusSection = builder.Configuration.GetSection("EPPlus");
+            var licenseContext = epplusSection.GetValue<string>("LicenseContext");
+            var licenseKey = epplusSection.GetValue<string>("LicenseKey");
+
+            if (licenseContext == "NonCommercial")
+            {
+                ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization"); //This will also set the Company property to the organization name provided in the argument.
+            }
 
 
             var app = builder.Build();

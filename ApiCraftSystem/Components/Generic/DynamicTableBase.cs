@@ -1,0 +1,136 @@
+﻿using ApiCraftSystem.Repositories.GenericService;
+using ApiCraftSystem.Repositories.GenericService.Dtos;
+using ApiCraftSystem.Shared;
+using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using OfficeOpenXml;
+using System.Dynamic;
+
+namespace ApiCraftSystem.Components.Generic
+{
+    public class DynamicTableBase : ComponentBase
+    {
+        [Inject] protected IDynamicDataService _service { get; set; }
+        [Inject] protected IJSRuntime JS { get; set; }
+        public List<ExpandoObject> Data { get; set; } = new();
+        public List<string> Headers { get; set; } = new();
+        protected int PageIndex { get; set; } = 1;
+        protected int PageSize { get; set; } = 10;
+        protected int TotalCount { get; set; } = 0;
+        protected string SortColumn { get; set; } = "";
+        protected bool SortAscending { get; set; } = true;
+
+        protected DynamicTableFormModel DataCraftForm = new DynamicTableFormModel();
+
+        protected bool submitted = false;
+
+        public int TotalPages = 0;
+
+        protected async Task LoadData()
+        {
+            submitted = true;
+
+            if (DataCraftForm.SelectedProvider == null)
+                return;
+
+            var result = await _service.GetPagedDataAsync(
+                DataCraftForm.ConnectionString,
+                DataCraftForm.SelectedProvider.Value,
+                DataCraftForm.TableName,
+                SortColumn,
+                SortAscending,
+                PageIndex - 1,
+                PageSize
+            );
+            Data = result.Data;
+            TotalCount = result.TotalCount;
+            TotalPages = (int)Math.Ceiling((double)TotalCount / PageSize);
+
+            Headers = Data.FirstOrDefault() is IDictionary<string, object> row
+                ? row.Keys.ToList()
+                : new List<string>();
+        }
+
+
+        protected void SortByColumn(string column)
+        {
+            if (SortColumn == column)
+            {
+                SortAscending = !SortAscending;
+            }
+            else
+            {
+                SortColumn = column;
+                SortAscending = true;
+            }
+            _ = LoadData();
+        }
+        protected async Task ExportToExcel()
+        {
+
+            var resultExcel = await _service.GetPagedDataAsync(
+                DataCraftForm.ConnectionString,
+                DataCraftForm.SelectedProvider.Value,
+                DataCraftForm.TableName,
+                SortColumn,
+                SortAscending,
+                0,
+                10000000
+            );
+            var ExcelData = resultExcel.Data;
+
+            var ExcelHeaders = Data.FirstOrDefault() is IDictionary<string, object> row
+                ? row.Keys.ToList()
+                : new List<string>();
+
+            //---------------------------------------------------
+
+            using var package = new OfficeOpenXml.ExcelPackage();
+            var worksheet = package.Workbook.Worksheets.Add("Export");
+
+            for (int i = 0; i < ExcelHeaders.Count; i++)
+            {
+                worksheet.Cells[1, i + 1].Value = ExcelHeaders[i];
+            }
+
+            for (int row1 = 0; row1 < ExcelData.Count; row1++)
+            {
+                var rowData = (IDictionary<string, object>)ExcelData[row1];
+                for (int col = 0; col < ExcelHeaders.Count; col++)
+                {
+                    worksheet.Cells[row1 + 2, col + 1].Value = rowData[ExcelHeaders[col]];
+                }
+            }
+
+            var fileName = $"{DataCraftForm.TableName}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+            var bytes = package.GetAsByteArray();
+
+            using var streamRef = new MemoryStream(bytes);
+            using var dotnetStreamRef = new DotNetStreamReference(streamRef);
+            await JS.InvokeVoidAsync("downloadFile", fileName, dotnetStreamRef);
+        }
+
+        protected async Task PrevPage()
+        {
+            if (PageIndex > 1)
+            {
+                PageIndex--;
+                await LoadData();
+            }
+        }
+        protected async Task NextPage()
+        {
+            if (PageIndex < TotalCount)
+            {
+                PageIndex++;
+                await LoadData();
+            }
+        }
+        protected async Task GoToPage(int page)
+        {
+            PageIndex = page;
+            await LoadData();
+        }
+
+    }
+}
