@@ -74,3 +74,16 @@ h1:focus {
         left: 10px;
     }
 }
+
+.rating-stars {
+    display: flex;
+    font-size: 2rem;
+    cursor: pointer;
+    color: gray;
+}
+
+    .rating-stars .star.filled,
+    .rating-stars .star:hover,
+    .rating-stars .star:hover ~ .star {
+        color: gold;
+    }

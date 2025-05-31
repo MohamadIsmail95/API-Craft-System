@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using OfficeOpenXml;
 using System.Dynamic;
+using System.Threading.Tasks;
 
 namespace ApiCraftSystem.Components.Generic
 {
@@ -22,37 +23,50 @@ namespace ApiCraftSystem.Components.Generic
 
         protected DynamicTableFormModel DataCraftForm = new DynamicTableFormModel();
 
-        protected bool submitted = false;
+        protected bool? submitted = null;
+
+        protected bool IsLoading;
 
         public int TotalPages = 0;
 
         protected async Task LoadData()
         {
-            submitted = true;
-
             if (DataCraftForm.SelectedProvider == null)
                 return;
 
-            var result = await _service.GetPagedDataAsync(
-                DataCraftForm.ConnectionString,
-                DataCraftForm.SelectedProvider.Value,
-                DataCraftForm.TableName,
-                SortColumn,
-                SortAscending,
-                PageIndex - 1,
-                PageSize
-            );
-            Data = result.Data;
-            TotalCount = result.TotalCount;
-            TotalPages = (int)Math.Ceiling((double)TotalCount / PageSize);
+            try
+            {
+                IsLoading = true;
+                var result = await _service.GetPagedDataAsync(
+                    DataCraftForm.ConnectionString,
+                    DataCraftForm.SelectedProvider.Value,
+                    DataCraftForm.TableName,
+                    SortColumn,
+                    SortAscending,
+                    PageIndex - 1,
+                    PageSize
+                );
+                Data = result.Data;
+                TotalCount = result.TotalCount;
+                TotalPages = (int)Math.Ceiling((double)TotalCount / PageSize);
 
-            Headers = Data.FirstOrDefault() is IDictionary<string, object> row
-                ? row.Keys.ToList()
-                : new List<string>();
+                Headers = Data.FirstOrDefault() is IDictionary<string, object> row
+                    ? row.Keys.ToList()
+                    : new List<string>();
+
+                submitted = true;
+                IsLoading = false;
+
+            }
+            catch
+            {
+                submitted = false;
+                IsLoading = false;
+
+            }
+
         }
-
-
-        protected void SortByColumn(string column)
+        protected async Task SortByColumn(string column)
         {
             if (SortColumn == column)
             {
@@ -63,7 +77,7 @@ namespace ApiCraftSystem.Components.Generic
                 SortColumn = column;
                 SortAscending = true;
             }
-            _ = LoadData();
+            await LoadData();
         }
         protected async Task ExportToExcel()
         {
@@ -88,17 +102,25 @@ namespace ApiCraftSystem.Components.Generic
             using var package = new OfficeOpenXml.ExcelPackage();
             var worksheet = package.Workbook.Worksheets.Add("Export");
 
+            ExcelHeaders = ExcelHeaders.Where(x => x.ToLower() != "sid" && x.ToLower() != "rownum").ToList();
+
             for (int i = 0; i < ExcelHeaders.Count; i++)
             {
+
                 worksheet.Cells[1, i + 1].Value = ExcelHeaders[i];
+
             }
 
             for (int row1 = 0; row1 < ExcelData.Count; row1++)
             {
                 var rowData = (IDictionary<string, object>)ExcelData[row1];
+
                 for (int col = 0; col < ExcelHeaders.Count; col++)
                 {
+
                     worksheet.Cells[row1 + 2, col + 1].Value = rowData[ExcelHeaders[col]];
+
+
                 }
             }
 
@@ -109,7 +131,6 @@ namespace ApiCraftSystem.Components.Generic
             using var dotnetStreamRef = new DotNetStreamReference(streamRef);
             await JS.InvokeVoidAsync("downloadFile", fileName, dotnetStreamRef);
         }
-
         protected async Task PrevPage()
         {
             if (PageIndex > 1)

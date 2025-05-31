@@ -10,9 +10,21 @@
 <script src="js/site.js"></script>
 
 
+@if (submitted != null && submitted == true)
+{
+    <div class="alert alert-success mt-3">Filter submitted successfully!</div>
+}
+
+@if (submitted != null && submitted == false)
+{
+    <div class="alert alert-danger mt-3">Internal Server Error. Please call administrator</div>
+}
+
+
+
 <div class="card">
     <div class="card-body">
-        <h5 class="card-title">Data Craft Form</h5>
+        <h5 class="card-title">Data Craft Filter</h5>
         <EditForm Model="DataCraftForm" OnValidSubmit="@LoadData" FormName="DataCraftForm">
             <DataAnnotationsValidator />
             <ValidationSummary />
@@ -41,13 +53,18 @@
                 <ValidationMessage For="@(() => DataCraftForm.TableName)" />
             </div>
 
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button class="btn btn-success" type="submit" disabled="@(IsLoading)">
+                @if (IsLoading)
+                {
+                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+
+                }
+
+                Submit
+            </button>
         </EditForm>
 
-        @if (submitted)
-        {
-            <div class="alert alert-success mt-3">Form submitted successfully!</div>
-        }
+       
 
     </div>
 </div>
@@ -58,6 +75,17 @@
     <button class="btn btn-success" @onclick="ExportToExcel" style="margin-top:10px;margin-bottom:10">
         <i class="bi bi-cloud-download"></i>
     </button>
+
+    @if (IsLoading)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-grow" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+   
+
     <div class="card" style="margin-top:10px">
     
         <div class="card-body">
@@ -83,7 +111,11 @@
                         <tr>
                             @foreach (var header in Headers)
                             {
-                                <td>@(row.TryGetValue(header, out var val) ? val : null)</td>
+                                if (header.ToLower() != "sid" && header.ToLower() != "rownum")
+                                {
+                                    <td>@(row.TryGetValue(header, out var val) ? val : null)</td>
+
+                                }
                             }
                         </tr>
                     }
@@ -91,25 +123,63 @@
             </table>
 
             <nav>
-
                 <ul class="pagination">
-                    <li class="page-item @(PageIndex == 0 ? "disabled" : "")">
+                    <li class="page-item @(PageIndex == 1 ? "disabled" : "")">
                         <button class="page-link" @onclick="PrevPage">Previous</button>
                     </li>
-                    @for (int i = 1; i <= (int)Math.Ceiling((double)TotalCount / PageSize); i++)
+
+                    @if (TotalPages <= 10)
                     {
-                        var pageIndex = i;
-                        <li class="page-item @(PageIndex == i ? "active" : "")">
-                            <button class="page-link" @onclick="() => GoToPage(pageIndex)">@i</button>
+                        @for (int i = 1; i <= TotalPages; i++)
+                        {
+                            <li class="page-item @(PageIndex == i ? "active" : "")">
+                                <button class="page-link" @onclick="() => GoToPage(i)">@i</button>
+                            </li>
+                        }
+                    }
+                    else
+                    {
+                        // Show first page
+                        <li class="page-item @(PageIndex == 1 ? "active" : "")">
+                            <button class="page-link" @onclick="() => GoToPage(1)">1</button>
+                        </li>
+
+                        // Show "..." before current range
+                        @if (PageIndex > 4)
+                        {
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        }
+
+                        // Show pages around the current page
+                        @for (int i = Math.Max(2, PageIndex - 2); i <= Math.Min(TotalPages - 1, PageIndex + 2); i++)
+                        {
+                            <li class="page-item @(PageIndex == i ? "active" : "")">
+                                <button class="page-link" @onclick="() => GoToPage(i)">@i</button>
+                            </li>
+                        }
+
+                        // Show "..." after current range
+                        @if (PageIndex < TotalPages - 3)
+                        {
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        }
+
+                        // Show last page
+                        <li class="page-item @(PageIndex == TotalPages ? "active" : "")">
+                            <button class="page-link" @onclick="() => GoToPage(TotalPages)">@TotalPages</button>
                         </li>
                     }
+
                     <li class="page-item @(PageIndex == TotalPages ? "disabled" : "")">
                         <button class="page-link" @onclick="NextPage">Next</button>
                     </li>
-
                 </ul>
-                <span class="fw-bold fs-8 text-secondary">Total Count: @TotalCount</span>
 
+                <span class="fw-bold fs-8 text-secondary">Total Count: @TotalCount</span>
             </nav>
 
         </div>

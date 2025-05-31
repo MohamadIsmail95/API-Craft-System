@@ -1,4 +1,5 @@
 ﻿@page "/Api-Craft"
+@using ApiCraftSystem.Components.Rating
 @using ApiCraftSystem.Repositories.ApiServices.Dtos
 @using Microsoft.AspNetCore.Authorization
 @rendermode InteractiveServer
@@ -40,12 +41,21 @@
     </div>
 }
 
+
 else
 {
 
     <div class="card">
         <div class="card-body">
-            <h5 class="card-title">API</h5>
+
+            <div>
+                <h5 class="card-title">API</h5>
+
+                <StarRating Rating="@userRating" />
+
+            </div>
+            
+
             <div class="position-absolute top-0 end-0 m-3">
                 <button type="button" class="btn btn-outline-primary" @onclick="@(() => NavigationManager.NavigateTo("/api-form"))">
                     <i class="bi bi-plus-lg"></i>
@@ -122,25 +132,67 @@ else
             </div>
             <nav>
                 <ul class="pagination">
+                    <!-- Previous Button -->
                     <li class="page-item @(PagingRequest.CurrentPage == 1 ? "disabled" : "")">
                         <button class="page-link" @onclick="PrevPage">Previous</button>
                     </li>
-                    @for (int i = 1; i <= pagingResponse.TotalPages; i++)
+
+                    @if (pagingResponse.TotalPages <= 10)
                     {
-                        var pageIndex = i;
-                        <li class="page-item @(PagingRequest.CurrentPage == i ? "active" : "")">
-                            <button class="page-link" @onclick="() => GoToPage(pageIndex)">@i</button>
+                        @for (int i = 1; i <= pagingResponse.TotalPages; i++)
+                        {
+                            var pageIndex = i;
+
+                            <li class="page-item @(PagingRequest.CurrentPage == i ? "active" : "")">
+                                <button class="page-link" @onclick="() => GoToPage(pageIndex)">@i</button>
+                            </li>
+                        }
+                    }
+                    else
+                    {
+                        // First Page
+                        <li class="page-item @(PagingRequest.CurrentPage == 1 ? "active" : "")">
+                            <button class="page-link" @onclick="() => GoToPage(1)">1</button>
+                        </li>
+
+                        // Ellipsis before current range
+                        @if (PagingRequest.CurrentPage > 4)
+                        {
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        }
+
+                        // Pages around current page
+                        @for (int i = Math.Max(2, PagingRequest.CurrentPage - 2); i <= Math.Min(pagingResponse.TotalPages - 1, PagingRequest.CurrentPage + 2); i++)
+                        {
+                            <li class="page-item @(PagingRequest.CurrentPage == i ? "active" : "")">
+                                <button class="page-link" @onclick="() => GoToPage(i)">@i</button>
+                            </li>
+                        }
+
+                        // Ellipsis after current range
+                        @if (PagingRequest.CurrentPage < pagingResponse.TotalPages - 3)
+                        {
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        }
+
+                        // Last Page
+                        <li class="page-item @(PagingRequest.CurrentPage == pagingResponse.TotalPages ? "active" : "")">
+                            <button class="page-link" @onclick="() => GoToPage(pagingResponse.TotalPages)">@pagingResponse.TotalPages</button>
                         </li>
                     }
+
+                    <!-- Next Button -->
                     <li class="page-item @(PagingRequest.CurrentPage == pagingResponse.TotalPages ? "disabled" : "")">
                         <button class="page-link" @onclick="NextPage">Next</button>
                     </li>
-
                 </ul>
+
                 <span class="fw-bold fs-8 text-secondary">Total Count: @pagingResponse.TotalCount</span>
-
             </nav>
-
 
         </div>
     </div>

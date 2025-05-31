@@ -11,7 +11,8 @@ namespace ApiCraftSystem.Data
         public DbSet<ApiStore> ApiStores { get; set; }
         public DbSet<ApiHeader> ApiHeaders { get; set; }
         public DbSet<ApiMap> ApiMaps { get; set; }
-
+        public DbSet<Tenant> Tenants { get; set; }
+        public DbSet<Rate> Rates { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
