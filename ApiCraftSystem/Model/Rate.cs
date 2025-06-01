@@ -5,7 +5,7 @@ namespace ApiCraftSystem.Model
 {
     public class Rate
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid Id { get; set; }
 
         [ForeignKey("ApplicationUser")]
         public string UserId { get; set; } = string.Empty;

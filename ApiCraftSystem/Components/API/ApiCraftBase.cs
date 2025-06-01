@@ -19,7 +19,6 @@ namespace ApiCraftSystem.Components.API
         protected bool? result = null;
         protected bool isDeletedOpt = false;
         protected bool isFinish = false;
-        protected int userRating = 0;
 
         protected override async Task OnInitializedAsync()
         {

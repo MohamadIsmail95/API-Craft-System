@@ -6,11 +6,15 @@ using ApiCraftSystem.HangFire;
 using ApiCraftSystem.Helper.Mapper;
 using ApiCraftSystem.Repositories.ApiServices;
 using ApiCraftSystem.Repositories.GenericService;
+using ApiCraftSystem.Repositories.RateService;
 using ApiCraftSystem.Repositories.SchedulerService;
+using ApiCraftSystem.Repositories.TenantService;
 using Hangfire;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using OfficeOpenXml;
 using System.ComponentModel;
 namespace ApiCraftSystem
@@ -32,24 +36,33 @@ namespace ApiCraftSystem
             builder.Services.AddScoped<IApiService, ApiService>();
             builder.Services.AddScoped<ISchedulerService, SchedulerService>();
             builder.Services.AddScoped<IDynamicDataService, DynamicDataService>();
+            builder.Services.AddScoped<IRateService, RateService>();
+            builder.Services.AddScoped<ITenantService, TenantService>();
 
 
             builder.Services.AddAuthentication(options =>
                 {
                     options.DefaultScheme = IdentityConstants.ApplicationScheme;
                     options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-                })
-                .AddIdentityCookies();
+                });
+            // .AddIdentityCookies();
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
+
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-            builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>()
-                .AddSignInManager()
-                .AddDefaultTokenProviders();
+            //builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            //    .AddEntityFrameworkStores<ApplicationDbContext>()
+            //    .AddSignInManager()
+            //    .AddDefaultTokenProviders();
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
+             .AddEntityFrameworkStores<ApplicationDbContext>()
+             .AddSignInManager()
+             .AddDefaultTokenProviders();
+
+
 
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 

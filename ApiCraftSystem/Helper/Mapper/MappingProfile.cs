@@ -1,5 +1,7 @@
 ﻿using ApiCraftSystem.Model;
 using ApiCraftSystem.Repositories.ApiServices.Dtos;
+using ApiCraftSystem.Repositories.RateService.Dtos;
+using ApiCraftSystem.Repositories.TenantService.Dto;
 using AutoMapper;
 
 namespace ApiCraftSystem.Helper.Mapper
@@ -12,6 +14,8 @@ namespace ApiCraftSystem.Helper.Mapper
             CreateMap<ApiHeader, ApiHeaderDto>().ReverseMap();
             CreateMap<ApiMap, ApiMapDto>().ReverseMap();
             CreateMap<ApiStore, ApiStoreListDto>().ReverseMap();
+            CreateMap<Rate, RateDto>().ReverseMap();
+            CreateMap<Tenant, TenantDto>().ReverseMap();
 
 
         }
