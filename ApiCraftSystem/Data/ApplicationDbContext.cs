@@ -13,6 +13,7 @@ namespace ApiCraftSystem.Data
         public DbSet<ApiMap> ApiMaps { get; set; }
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<Rate> Rates { get; set; }
+        public DbSet<ApiShare> ApiShares { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

@@ -22,7 +22,7 @@
       padding: 2rem;
       max-width: 1000px;
       margin: auto;
-      background-color: white;
+        background-color: white;
     }
 
     h2 {
@@ -51,11 +51,28 @@
       font-weight: bold;
       color: #007acc;
     }
+
+    .feature-section {
+        padding: 2rem;
+        background-color: #f9fafb;
+        border-radius: 12px;
+        box-shadow: 0 0 12px rgba(0,0,0,0.05);
+    }
+
+        .feature-section pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
   </style>
 
   <header>
     <h1>API & DataTable Craft System</h1>
-    <p>Your All-in-One API Integration & Data Management Platform</p>
+    <p style="color:blueviolet">Your All-in-One API Integration & Data Management Platform</p>
 
   </header>
 
@@ -79,8 +96,31 @@
     </section>
 
     <section class="feature-section">
-      <h2>📊 Dashboard Integration</h2>
-      <p>Connect any database table and display its data directly on your dashboard. Use filters and search to easily access the required information.</p>
+        <h2>
+            🔗Share API Service
+        </h2>
+
+        <p>
+            The <strong>Share Data API</strong> is a secure, scalable service that allows authorized consumers to retrieve dynamic data from specific datasets using a unique API key and Bearer token authentication.
+        </p>
+
+        <p>
+            This service is designed for external clients, partners, or internal systems that require flexible access to tabular data with filtering, sorting, and pagination.
+        </p>
+
+        <h3>🔐 Example Request</h3>
+        <pre><code class="http">
+         POST /api/ShareApi/GetShareData?ApiKey={your-api-key}
+         Authorization: Bearer {your-token}
+         Content-Type: application/json
+
+         {
+           "pageSize": 10,
+           "pageIndex": 1,
+           "orderBy": "",
+           "ascending":true
+         }
+         </code></pre>
     </section>
 
     <section class="feature-section">

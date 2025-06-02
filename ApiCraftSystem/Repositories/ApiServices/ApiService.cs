@@ -328,7 +328,6 @@ namespace ApiCraftSystem.Repositories.ApiServices
 
             await db.ExecuteAsync(createTableSql);
         }
-
         private async Task UpdateApiStoreInfoAsync(ApiStoreDto input)
         {
             var store = await _db.ApiStores.FindAsync(input.Id);

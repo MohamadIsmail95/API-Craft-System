@@ -1,5 +1,7 @@
 ﻿using ApiCraftSystem.Repositories.ApiServices;
 using ApiCraftSystem.Repositories.ApiServices.Dtos;
+using ApiCraftSystem.Repositories.ApiShareService;
+using ApiCraftSystem.Repositories.ApiShareService.Dtos;
 using ApiCraftSystem.Shared;
 using Microsoft.AspNetCore.Components;
 using Timer = System.Timers.Timer;
@@ -9,6 +11,7 @@ namespace ApiCraftSystem.Components.API
     public class ApiCraftBase : ComponentBase
     {
         [Inject] protected IApiService _apiService { get; set; }
+        [Inject] protected IApiShareService _apiShareService { get; set; }
 
         protected PagingRequest PagingRequest = new PagingRequest();
         protected PagingResponse pagingResponse = new PagingResponse();
@@ -19,6 +22,11 @@ namespace ApiCraftSystem.Components.API
         protected bool? result = null;
         protected bool isDeletedOpt = false;
         protected bool isFinish = false;
+        protected bool isShareOpt = false;
+        protected bool isShowResult = false;
+
+        protected ApiShareDto apiShare = new ApiShareDto();
+
 
         protected override async Task OnInitializedAsync()
         {
@@ -107,15 +115,18 @@ namespace ApiCraftSystem.Components.API
 
             await LoadApis(PagingRequest);
         }
-        protected void PromptOperation(Guid id, bool isDelete)
+        protected void PromptOperation(Guid id, bool isDelete, bool isShare)
         {
             isDeletedOpt = isDelete;
+            isShareOpt = isShare;
             apiId = id;
             showConfirmation = true;
         }
         protected void CloseConfirmation()
         {
             showConfirmation = false;
+            isShowResult = false;
+
             apiId = null;
         }
         protected async Task ConfirmOperation()
@@ -132,6 +143,11 @@ namespace ApiCraftSystem.Components.API
 
                         await Delete(apiId.Value);
 
+                    }
+
+                    if (isShareOpt)
+                    {
+                        await ShareApi(apiId.Value);
                     }
                     else
                     {
@@ -154,6 +170,17 @@ namespace ApiCraftSystem.Components.API
                 result = false;
             }
 
+        }
+        protected async Task ShareApi(Guid id)
+        {
+            var api = await _apiService.GetByIdAsync(id);
+
+            if (api == null)
+                throw new Exception("API not found");
+
+            apiShare = await _apiShareService.GetApiShareLink(api);
+
+            isShowResult = true;
         }
     }
 }

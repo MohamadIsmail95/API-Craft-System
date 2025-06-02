@@ -5,6 +5,7 @@ using ApiCraftSystem.Data;
 using ApiCraftSystem.HangFire;
 using ApiCraftSystem.Helper.Mapper;
 using ApiCraftSystem.Repositories.ApiServices;
+using ApiCraftSystem.Repositories.ApiShareService;
 using ApiCraftSystem.Repositories.GenericService;
 using ApiCraftSystem.Repositories.RateService;
 using ApiCraftSystem.Repositories.SchedulerService;
@@ -38,6 +39,7 @@ namespace ApiCraftSystem
             builder.Services.AddScoped<IDynamicDataService, DynamicDataService>();
             builder.Services.AddScoped<IRateService, RateService>();
             builder.Services.AddScoped<ITenantService, TenantService>();
+            builder.Services.AddScoped<IApiShareService, ApiShareService>();
 
 
             builder.Services.AddAuthentication(options =>
