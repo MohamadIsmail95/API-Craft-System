@@ -118,9 +118,8 @@ else
 
                                 <td>
                                         <button class="btn btn-primary btn-sm" @onclick="@(() => NavigationManager.NavigateTo("/api-form/" + api.Id))"><i class="bi bi-pencil-square"></i></button>
-                                        <button class="btn btn-danger btn-sm" @onclick="() => PromptOperation(api.Id ,true,false)"><i class="bi bi-trash"></i></button>
-                                        <button class="btn btn-success btn-sm" @onclick="() => PromptOperation(api.Id, false,false)"><i class="bi bi-gear-wide-connected"></i></button>
-                                        <button class="btn btn-dark btn-sm" @onclick="() => PromptOperation(api.Id, false, true)"><i class="bi bi-share"></i></button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => PromptOperation(api.Id ,true)"><i class="bi bi-trash"></i></button>
+                                        <button class="btn btn-success btn-sm" @onclick="() => PromptOperation(api.Id, false)"><i class="bi bi-gear-wide-connected"></i></button>
 
 
                                 </td>
@@ -246,35 +245,3 @@ else
 }
 
 
-@if (isShowResult)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-
-                <div class="modal-header">
-                    <h5 class="modal-title" style="color:black">you can share this API with another person</h5>
-                    <button type="button" class="btn-close" @onclick="CloseConfirmation"></button>
-                </div>
-                <div class="modal-body">
-
-                    <div class="mb-3">
-                        <label for="exampleFormControlInput1" class="form-label">API</label>
-                        <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="name@example.com" value="@apiShare.Url">
-                    </div>
-                    <div class="mb-3">
-                        <label for="exampleFormControlTextarea1" class="form-label">API Token</label>
-                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3">@apiShare.ApiToken</textarea>
-                    </div>
-
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseConfirmation">Cancel</button>
-
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-}

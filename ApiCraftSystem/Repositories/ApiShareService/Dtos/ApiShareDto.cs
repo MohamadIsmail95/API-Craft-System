@@ -4,14 +4,11 @@
     {
         public string Url { get; set; } = string.Empty;
 
-        public string ApiToken { get; set; } = string.Empty;
-
         public ApiShareDto() { }
 
-        public ApiShareDto(string url, string apiToken)
+        public ApiShareDto(string url)
         {
             Url = url;
-            ApiToken = apiToken;
         }
     }
 }

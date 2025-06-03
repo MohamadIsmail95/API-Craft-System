@@ -1,6 +1,7 @@
 ﻿using ApiCraftSystem.Repositories.ApiShareService;
 using ApiCraftSystem.Repositories.GenericService;
 using ApiCraftSystem.Shared;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,7 @@ namespace ApiCraftSystem.Controller
         }
 
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("GetShareData")]
         public async Task<IActionResult> GetData([FromQuery] string? apiKey, [FromBody] ShareApiRequest? input)
         {
@@ -33,19 +35,19 @@ namespace ApiCraftSystem.Controller
             if (input is null)
                 return BadRequest("Request body is required.");
 
-            // Extract Bearer token safely
-            var authHeader = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
-            if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                return Unauthorized("Missing or invalid Authorization header.");
+            // ✅ Extract userId from JWT token claims
+            var userIdClaim = User.FindFirst("userId");
+            if (userIdClaim == null)
+                return Unauthorized("Invalid token: userId claim is missing.");
 
-            var bearerToken = authHeader["Bearer ".Length..].Trim();
+            var userId = userIdClaim.Value;
 
-            // Retrieve shared API info (you may want to cache this if reused)
-            var shareApi = await _apiShareService.GetShareApi(apiKey, bearerToken);
+            // ✅ Get the ShareApi using userId
+            var shareApi = await _apiShareService.GetShareApi(apiKey, userId);
             if (shareApi is null)
                 return BadRequest("Invalid or unauthorized API key/token combination.");
 
-            // Validate required DB connection info
+            // ✅ Validate required DB connection info
             if (string.IsNullOrWhiteSpace(shareApi.ConnectionString) ||
                 string.IsNullOrWhiteSpace(shareApi.DatabaseType.ToString()) ||
                 string.IsNullOrWhiteSpace(shareApi.TableName))
@@ -53,7 +55,7 @@ namespace ApiCraftSystem.Controller
                 return StatusCode(500, "API configuration is missing required information.");
             }
 
-            // Get paged data
+            // ✅ Get paged data
             var result = await _dynamicDataService.GetPagedDataAsync(
                 shareApi.ConnectionString,
                 shareApi.DatabaseType,
@@ -66,6 +68,7 @@ namespace ApiCraftSystem.Controller
 
             return Ok(new { Data = result.Data, Count = result.TotalCount });
         }
+
 
     }
 }

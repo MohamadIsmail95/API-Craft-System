@@ -8,6 +8,8 @@
 @attribute [Authorize]
 
 <script src="js/site.js"></script>
+<script src="js/multiSelect.js"></script>
+
 
 
 @if (submitted != null && submitted == true)
@@ -19,8 +21,6 @@
 {
     <div class="alert alert-danger mt-3">Internal Server Error. Please call administrator</div>
 }
-
-
 
 <div class="card">
     <div class="card-body">
@@ -53,15 +53,33 @@
                 <ValidationMessage For="@(() => DataCraftForm.TableName)" />
             </div>
 
-            <button class="btn btn-success" type="submit" disabled="@(IsLoading)">
-                @if (IsLoading)
-                {
-                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
 
-                }
+           <div class="mb-3">
+              <label for="userSelect" class="form-label fw-bold">Select Users</label>
 
-                Submit
-            </button>
+                <select id="userSelect" class="form-select" multiple @onchange="OnUsersSelected" @ref="userSelectRef">
+                    @foreach (var user in UsersLookUp)
+                    {
+                        <option value="@user.Id.ToString()" selected="@DataCraftForm.UserIds.Contains(user.Id.ToString())">@user.Name</option>
+                    }
+                </select>
+
+        </div>
+
+            <div>
+                <button class="btn btn-success" type="submit" disabled="@(IsLoading)">
+                    @if (IsLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+
+                    }
+
+                    Show Result
+                </button>
+                <button class="btn btn-dark" type="button" @onclick="() => GetShareLink()">Share <i class="bi bi-share"></i> </button>
+
+            </div>
+           
 
           
         </EditForm>
@@ -70,8 +88,6 @@
 
     </div>
 </div>
-
-
 @if (Data.Any())
 {
     <button class="btn btn-success" @onclick="ExportToExcel" style="margin-top:10px;margin-bottom:10">
@@ -188,4 +204,33 @@
     </div>
 
 
+}
+
+@if (!string.IsNullOrEmpty(ShareLink))
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" style="color:black">you can share this API with another person</h5>
+                    <button type="button" class="btn-close" @onclick="CloseConfirmation"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label for="exampleFormControlInput1" class="form-label">API</label>
+                        <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="name@example.com" value="@ShareLink">
+                    </div>
+
+
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseConfirmation">Cancel</button>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
 }

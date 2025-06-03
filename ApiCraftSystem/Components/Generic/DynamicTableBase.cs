@@ -1,10 +1,15 @@
-﻿using ApiCraftSystem.Repositories.GenericService;
+﻿using ApiCraftSystem.Data;
+using ApiCraftSystem.Repositories.ApiShareService;
+using ApiCraftSystem.Repositories.GenericService;
 using ApiCraftSystem.Repositories.GenericService.Dtos;
 using ApiCraftSystem.Shared;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
 using OfficeOpenXml;
 using System.Dynamic;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 
 namespace ApiCraftSystem.Components.Generic
@@ -13,6 +18,8 @@ namespace ApiCraftSystem.Components.Generic
     {
         [Inject] protected IDynamicDataService _service { get; set; }
         [Inject] protected IJSRuntime JS { get; set; }
+        [Inject] protected UserManager<ApplicationUser> _userManager { get; set; }
+        [Inject] protected IApiShareService _apiShareService { get; set; }
         public List<ExpandoObject> Data { get; set; } = new();
         public List<string> Headers { get; set; } = new();
         protected int PageIndex { get; set; } = 1;
@@ -28,7 +35,16 @@ namespace ApiCraftSystem.Components.Generic
         protected bool IsLoading;
 
         public int TotalPages = 0;
+        protected List<LookUpDto> UsersLookUp { get; set; } = new();
 
+        protected string ShareLink = string.Empty;
+
+        protected ElementReference userSelectRef;
+
+        protected override async Task OnInitializedAsync()
+        {
+            await LoadUsersAsync();
+        }
         protected async Task LoadData()
         {
             if (DataCraftForm.SelectedProvider == null)
@@ -39,7 +55,7 @@ namespace ApiCraftSystem.Components.Generic
                 IsLoading = true;
                 var result = await _service.GetPagedDataAsync(
                     DataCraftForm.ConnectionString,
-                    DataCraftForm.SelectedProvider.Value,
+                    DataCraftForm.SelectedProvider,
                     DataCraftForm.TableName,
                     SortColumn,
                     SortAscending,
@@ -84,7 +100,7 @@ namespace ApiCraftSystem.Components.Generic
 
             var resultExcel = await _service.GetPagedDataAsync(
                 DataCraftForm.ConnectionString,
-                DataCraftForm.SelectedProvider.Value,
+                DataCraftForm.SelectedProvider,
                 DataCraftForm.TableName,
                 SortColumn,
                 SortAscending,
@@ -152,6 +168,34 @@ namespace ApiCraftSystem.Components.Generic
             PageIndex = page;
             await LoadData();
         }
+        protected async Task LoadUsersAsync()
+        {
+            List<ApplicationUser> Users = await _userManager.Users.ToListAsync();
 
+            UsersLookUp = Users.Select(x => new LookUpDto
+            {
+                Id = x.Id,
+                Name = x.UserName
+
+            }).ToList();
+        }
+        protected async Task GetShareLink()
+        {
+            var apiShare = await _apiShareService.CreateShareLink(DataCraftForm);
+
+            ShareLink = apiShare.Url;
+
+
+        }
+        public async Task CloseConfirmation()
+        {
+            ShareLink = string.Empty;
+        }
+
+        protected async Task OnUsersSelected(ChangeEventArgs e)
+        {
+            var selectedValues = await JS.InvokeAsync<string[]>("getSelectedValues", userSelectRef);
+            DataCraftForm.UserIds =selectedValues.ToList();
+        }
     }
 }

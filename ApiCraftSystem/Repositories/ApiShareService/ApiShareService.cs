@@ -3,6 +3,7 @@ using ApiCraftSystem.Helper.Utility;
 using ApiCraftSystem.Model;
 using ApiCraftSystem.Repositories.ApiServices.Dtos;
 using ApiCraftSystem.Repositories.ApiShareService.Dtos;
+using ApiCraftSystem.Repositories.GenericService.Dtos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -24,6 +25,35 @@ namespace ApiCraftSystem.Repositories.ApiShareService
             _httpContextAccessor = httpContextAccessor;
             _userManager = userManager;
         }
+
+        public async Task<ApiShareDto> CreateShareLink(DynamicTableFormModel input)
+        {
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+                return null;
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user is null)
+                return null;
+
+            var serverRoot = _configuration["applicationUrl"];
+            string apiKey = Guid.NewGuid().ToString();
+            string urlShare = $"{serverRoot}?ApiKey={apiKey}";
+
+            ApiShare apiShare = new ApiShare(urlShare, apiKey,
+                input.ConnectionString, input.SelectedProvider, input.TableName, string.Join(",", input.UserIds));
+
+            apiShare.CreatedBy = Guid.Parse(userId);
+
+            await _db.ApiShares.AddAsync(apiShare);
+
+            await _db.SaveChangesAsync();
+
+            return new ApiShareDto(apiShare.Url);
+        }
+
         public async Task<ApiShareDto?> GetApiShareLink(ApiStoreDto input)
         {
             var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -39,10 +69,9 @@ namespace ApiCraftSystem.Repositories.ApiShareService
             var serverRoot = _configuration["applicationUrl"];
             string apiKey = Guid.NewGuid().ToString();
             string urlShare = $"{serverRoot}?ApiKey={apiKey}";
-            string token = TokenGenerator.GenerateFakeToken(userId, user?.UserName, user?.RoleId, user?.TenantId.ToString());
 
-            ApiShare apiShare = new ApiShare(urlShare, apiKey, token,
-                input.ConnectionString, input.DatabaseType, input.TableName);
+            ApiShare apiShare = new ApiShare(urlShare, apiKey,
+                input.ConnectionString, input.DatabaseType, input.TableName, null);
 
             apiShare.CreatedBy = Guid.Parse(userId);
 
@@ -50,12 +79,12 @@ namespace ApiCraftSystem.Repositories.ApiShareService
 
             await _db.SaveChangesAsync();
 
-            return new ApiShareDto(apiShare.Url, apiShare.ApiToken);
+            return new ApiShareDto(apiShare.Url);
         }
 
-        public async Task<ApiShare?> GetShareApi(string apiKey, string token)
+        public async Task<ApiShare?> GetShareApi(string apiKey, string userId)
         {
-            var result = await _db.ApiShares.FirstOrDefaultAsync(x => x.ApiKey == apiKey && x.ApiToken == token);
+            var result = await _db.ApiShares.FirstOrDefaultAsync(x => x.ApiKey == apiKey && x.UserIds.Contains(userId));
 
             if (result is null)
                 return null;

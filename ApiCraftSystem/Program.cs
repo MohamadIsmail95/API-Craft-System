@@ -4,6 +4,7 @@ using ApiCraftSystem.Components.Account;
 using ApiCraftSystem.Data;
 using ApiCraftSystem.HangFire;
 using ApiCraftSystem.Helper.Mapper;
+using ApiCraftSystem.Helper.Utility;
 using ApiCraftSystem.Repositories.ApiServices;
 using ApiCraftSystem.Repositories.ApiShareService;
 using ApiCraftSystem.Repositories.GenericService;
@@ -11,13 +12,16 @@ using ApiCraftSystem.Repositories.RateService;
 using ApiCraftSystem.Repositories.SchedulerService;
 using ApiCraftSystem.Repositories.TenantService;
 using Hangfire;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
 using System.ComponentModel;
+using System.Text;
 namespace ApiCraftSystem
 {
     public class Program
@@ -97,6 +101,29 @@ namespace ApiCraftSystem
             {
                 ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization"); //This will also set the Company property to the organization name provided in the argument.
             }
+
+
+            //JWT Token 
+
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                   .AddJwtBearer(options =>
+        {
+            var config = builder.Configuration;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = config["Jwt:Issuer"],
+                ValidAudience = config["Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]))
+            };
+        });
+
+            builder.Services.AddScoped<JwtTokenGenerator>();
+
+
 
 
             var app = builder.Build();

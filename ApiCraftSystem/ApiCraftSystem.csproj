@@ -14,6 +14,7 @@
     <PackageReference Include="Hangfire" Version="1.8.20" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.20" />
     <PackageReference Include="Hangfire.SqlServer" Version="1.8.20" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.5" />
@@ -29,6 +30,14 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\Images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\MyProjects\ApiCraftSystem\ApiCraftSystem\Repositories\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="C:\MyProjects\ApiCraftSystem\ApiCraftSystem\Repositories\.editorconfig" />
   </ItemGroup>
 
 </Project>
