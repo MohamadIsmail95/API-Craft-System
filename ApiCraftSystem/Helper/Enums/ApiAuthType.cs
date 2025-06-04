@@ -4,6 +4,7 @@
     {
         None,
         Bearer,
-        Windows
+        Windows,
+        Custom
     }
 }

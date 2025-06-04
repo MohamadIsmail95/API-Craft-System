@@ -49,6 +49,12 @@ namespace ApiCraftSystem.Repositories.ApiServices.Dtos
         public int? ScHour { get; set; } = null;
         public int? ScMin { get; set; } = null;
 
+        public string? AuthUrl { get; set; } = string.Empty;
+        public string? AuthUrlBody { get; set; } = string.Empty;
+        public string? AuthHeaderParam { get; set; } = string.Empty;
+        public string? AuthResponseParam { get; set; } = string.Empty;
+        public ApiMethodeType? AuthMethodeType { get; set; } = ApiMethodeType.Post;
+
         public List<ApiHeaderDto>? ApiHeaders { get; set; } = new List<ApiHeaderDto>();
 
         [Required]

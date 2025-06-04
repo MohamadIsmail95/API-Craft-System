@@ -46,6 +46,15 @@ namespace ApiCraftSystem.Model
         public int? ScHour { get; set; } = null;
         public int? ScMin { get; set; } = null;
 
+        //Prop for external login before get api data
+        public string? AuthUrl { get; set; } = string.Empty;
+        public string? AuthUrlBody { get; set; } = string.Empty;
+        public string? AuthHeaderParam { get; set; } = string.Empty;
+        public string? AuthResponseParam { get; set; } = string.Empty;
+        public ApiMethodeType? AuthMethodeType { get; set; } = ApiMethodeType.Post;
+
+
+
         public bool IsDeleted { get; set; } = false;
 
 
