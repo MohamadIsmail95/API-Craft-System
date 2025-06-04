@@ -75,9 +75,7 @@ namespace ApiCraftSystem
             // Register AutoMapper
             builder.Services.AddAutoMapper(typeof(MappingProfile));
             builder.Services.AddHttpContextAccessor();
-
             builder.Services.AddHttpClient(); // Basic registration
-
             builder.Services.AddControllers(); // <--- Required for API support
 
 
@@ -129,6 +127,20 @@ namespace ApiCraftSystem
             var app = builder.Build();
 
             app.UseStaticFiles();
+
+
+            // Custom middleware to redirect unauthenticated users from root
+            app.Use(async (context, next) =>
+            {
+                // Redirect root "/" to login if not authenticated
+                if (context.Request.Path == "/" && !context.User.Identity.IsAuthenticated)
+                {
+                    context.Response.Redirect("/Account/Login"); // adjust route as needed
+                    return;
+                }
+
+                await next();
+            });
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

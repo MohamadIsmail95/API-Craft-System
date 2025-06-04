@@ -1,6 +1,8 @@
 ﻿@page "/Account/Login"
+@layout LoginLayout
 
 @using System.ComponentModel.DataAnnotations
+@using ApiCraftSystem.Components.Layout
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
 @using ApiCraftSystem.Data
@@ -11,10 +13,11 @@
 @inject IdentityRedirectManager RedirectManager
 
 <PageTitle>Log in</PageTitle>
-<div class="container d-flex justify-content-center align-items-center min-vh-100  text-black">
-    <div class="card shadow-lg rounded-4 p-4" style="width: 100%; max-width: 50%; background-image:linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%)">
+<div class="container d-flex justify-content-end align-items-center min-vh-100 text-black">
+    <div class="card shadow-lg rounded-4 p-4" style="width: 43%; background-image:linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%)">
+
         <div class="text-center mb-4">
-            <h2 class="fw-bold text-white">Welcome</h2>
+            <h2 class="fw-bold text-white">API Craft System</h2>
             <p class=" text-white">Please login to your account</p>
         </div>
 
@@ -46,6 +49,7 @@
             </div>
 
             <div class="text-center mt-3">
+                <a href="Account/ForgotPassword" class="text-decoration-none text-info small">Forgot your password?</a><br />
                 @* Uncomment if needed *@
                 @* <a href="Account/ForgotPassword" class="text-decoration-none text-info small">Forgot your password?</a><br />
                 <a href="Account/Register" class="text-decoration-none text-info small">Register as a new user</a><br />
