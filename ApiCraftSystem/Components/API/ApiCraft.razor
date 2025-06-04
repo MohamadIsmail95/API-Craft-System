@@ -86,9 +86,9 @@ else
                                 @SortIcon(nameof(ApiStoreListDto.MethodeType))
                         </th>
 
-                            <th @onclick="() => SortBy(nameof(ApiStoreListDto.JobPeriodic))" style="cursor:pointer">
-                                Scheduling
-                                @SortIcon(nameof(ApiStoreListDto.JobPeriodic))
+                            <th @onclick="() => SortBy(nameof(ApiStoreListDto.ScHour))" style="cursor:pointer">
+                                Scheduling 24h
+                                @SortIcon(nameof(ApiStoreListDto.ScHour))
                             </th>
 
                        
@@ -114,7 +114,16 @@ else
                                     <td>@api.Description</td>
                                     <td>@api.Url</td>
                                     <td>@api.MethodeType</td>
-                                    <td>@api.JobPeriodic</td>
+                                    @if (@api.ScHour != null && @api.ScMin != null)
+                                    {
+                                        <td>Daily At : @api.ScHour : @api.ScMin</td>
+
+                                    }
+                                    else
+                                    {
+                                        <td></td>
+
+                                    }
 
                                 <td>
                                         <button class="btn btn-primary btn-sm" @onclick="@(() => NavigationManager.NavigateTo("/api-form/" + api.Id))"><i class="bi bi-pencil-square"></i></button>

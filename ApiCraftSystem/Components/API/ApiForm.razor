@@ -282,22 +282,49 @@
                           <p>Job ID : @ApiForm.JobId</p>
                           </div>
                     }
-                  
-                <div class="row">
-                <div class="col-md-8">
-                <label for="exampleFormControlInput4" class="form-label">Periodic</label>
-                <InputSelect @bind-Value="ApiForm.JobPeriodic" class="form-select">
-                    @foreach (JobPeriodic job in Enum.GetValues(typeof(JobPeriodic)))
+
+                    @if(@isSchJob)
                     {
-                        <option value="@job">@job</option>
-                    }
+                         <div class="row">
+                         <div class="col-md-8">
+                          <label for="exampleFormControlInput4" class="form-label">Hour</label>
+                           <InputSelect @bind-Value="ApiForm.ScHour" class="form-select">
+                            @foreach (int hour in hours)
+                            {
+                                   <option value="@hour">@hour</option>
+                            }
                      
 
-                </InputSelect>
-                    </div>
+                            </InputSelect>
+                         </div>
+
+
+                          <div class="col-md-8">
+                         <label for="exampleFormControlInput4" class="form-label">Minute</label>
+                          <InputSelect @bind-Value="ApiForm.ScMin" class="form-select">
+                            @foreach (int min in minutes)
+                            {
+                                    <option value="@min">@min</option>
+                             }
+                     
+
+                          </InputSelect>
+                          </div>
                     
-                       
+
                 </div>  
+                    }
+                  
+               
+
+                <div class="row">
+                      <div class="col-md-8">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" role="switch" id="switchCheckChecked" @bind="isSchJob">
+                      <label class="form-check-label" for="switchCheckChecked">Scheduler run</label>
+                    </div>
+                    </div>
+                </div>
             }
             else if(CurrentStep == 5 && ApiForm.MethodeType == ApiMethodeType.Post)
             {

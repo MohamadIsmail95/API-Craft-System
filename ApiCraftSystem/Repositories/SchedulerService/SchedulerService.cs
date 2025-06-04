@@ -17,28 +17,38 @@ namespace ApiCraftSystem.Repositories.SchedulerService
         public async Task<string?> CreateScheduleAsync(ApiStoreDto input)
         {
 
-            if (input.JobPeriodic == JobPeriodic.NA)
+            if (input.ScHour is null && input.ScMin is null)
             {
                 return null;
             }
 
+            var targetTime = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, (int)input.ScHour, (int)input.ScMin, 0);
+            var localZone = TimeZoneInfo.FindSystemTimeZoneById("Arab Standard Time");
+            var utcTime = TimeZoneInfo.ConvertTimeToUtc(targetTime, localZone);
 
-            var cron = input.JobPeriodic.ToString() switch
-            {
-                "Every_5Min" => "*/5 * * * *",
-                "Every_10Min" => "*/10 * * * *",
-                "Every_15Min" => "*/15 * * * *",
-                "Every_30Min" => "*/30 * * * *",
-                "Every_45Min" => "*/45 * * * *",
-                "Hourly" => Cron.Hourly(),
-                "Daily" => Cron.Daily(),
-                "Weekly" => Cron.Weekly(),
-                "Monthly" => Cron.Monthly(),
-                _ => Cron.Daily()
-            };
+            // Schedule using UTC hour and minute
+            int utcHour = utcTime.Hour;
+            int utcMinute = utcTime.Minute;
+            string cron = $"{utcMinute} {utcHour} * * *";
+
+
+
+            //var cron = input.JobPeriodic.ToString() switch
+            //{
+            //    "Every_5Min" => "*/5 * * * *",
+            //    "Every_10Min" => "*/10 * * * *",
+            //    "Every_15Min" => "*/15 * * * *",
+            //    "Every_30Min" => "*/30 * * * *",
+            //    "Every_45Min" => "*/45 * * * *",
+            //    "Hourly" => Cron.Hourly(),
+            //    "Daily" => Cron.Daily(),
+            //    "Weekly" => Cron.Weekly(),
+            //    "Monthly" => Cron.Monthly(),
+            //    _ => Cron.Daily()
+            //};
 
             // Create a custom job ID (e.g., unique per API)
-            var jobId = $"fetch-{input.JobPeriodic.ToString()}-store-job-{input.Id}";
+            var jobId = $"fetch-{input.ScHour.ToString()}-{input.ScMin.ToString()}-store-job-{input.Id}";
 
             _jobManager.AddOrUpdate<IApiService>(
                 jobId,

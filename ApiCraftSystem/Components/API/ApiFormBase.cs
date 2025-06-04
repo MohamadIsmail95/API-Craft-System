@@ -28,7 +28,10 @@ namespace ApiCraftSystem.Components.API
         protected bool IsReCreate { get; set; } = false;
 
         private CancellationTokenSource _cts = new();
+        protected List<int> hours = Enumerable.Range(0, 24).ToList();
+        protected List<int> minutes = Enumerable.Range(0, 60).ToList();
 
+        protected bool isSchJob = true;
 
         protected override async Task OnInitializedAsync()
         {
@@ -52,6 +55,14 @@ namespace ApiCraftSystem.Components.API
         {
             try
             {
+                if (!isSchJob)
+                {
+                    ApiForm.ScHour = null;
+                    ApiForm.ScMin = null;
+
+                }
+
+
                 IsSave = false;
                 isError = false;
 

@@ -55,7 +55,7 @@ namespace ApiCraftSystem.Repositories.ApiServices
             ApiStore api = _mapper.Map<ApiStore>(input);
             api.CreatedAt = DateTime.UtcNow;
             api.CreatedBy = Guid.Parse(userId);
-            if (input.JobPeriodic != null && (input.JobPeriodic != JobPeriodic.NA))
+            if (input.ScHour != null && input.ScMin != null)
             {
                 api.JobId = await _schedulerService.CreateScheduleAsync(input);
 
@@ -167,7 +167,7 @@ namespace ApiCraftSystem.Repositories.ApiServices
                 await UpdateApiStoreMapsAsync(dto.Id, dto.ApiMaps ?? new());
                 await CreateDynamicTableAsync(dto);
 
-                if (dto.JobPeriodic == JobPeriodic.NA && !string.IsNullOrEmpty(dto.JobId))
+                if ((dto.ScHour == null && dto.ScMin == null) && !string.IsNullOrEmpty(dto.JobId))
                 {
                     await _schedulerService.RemoveSchedule(dto.JobId);
                 }

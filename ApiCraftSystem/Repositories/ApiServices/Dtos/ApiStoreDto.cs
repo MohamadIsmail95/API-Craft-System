@@ -46,7 +46,8 @@ namespace ApiCraftSystem.Repositories.ApiServices.Dtos
 
         public string? JobId { get; set; } = string.Empty;
 
-        public JobPeriodic? JobPeriodic { get; set; } = null;
+        public int? ScHour { get; set; } = null;
+        public int? ScMin { get; set; } = null;
 
         public List<ApiHeaderDto>? ApiHeaders { get; set; } = new List<ApiHeaderDto>();
 

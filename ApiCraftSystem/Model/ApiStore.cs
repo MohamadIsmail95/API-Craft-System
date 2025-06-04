@@ -43,7 +43,8 @@ namespace ApiCraftSystem.Model
 
         public string? JobId { get; set; } = string.Empty;
 
-        public JobPeriodic? JobPeriodic { get; set; }
+        public int? ScHour { get; set; } = null;
+        public int? ScMin { get; set; } = null;
 
         public bool IsDeleted { get; set; } = false;
 
