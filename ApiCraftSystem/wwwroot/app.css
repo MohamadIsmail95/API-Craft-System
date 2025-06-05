@@ -126,3 +126,34 @@ h1:focus {
     flex-direction: column;
     height: auto;
 }
+/* Basic table styling */
+.responsive-table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow-x: auto;
+    display: block;
+}
+
+    .responsive-table td,
+    .responsive-table th {
+        max-width: 150px; /* or any width you prefer */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+
+    .responsive-table th {
+        background-color: #f4f4f4;
+        font-weight: bold;
+    }
+
+/* Responsive for small screens */
+@media (max-width: 768px) {
+    .responsive-table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}

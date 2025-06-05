@@ -150,8 +150,9 @@
                     {
                         @for (int i = 1; i <= TotalPages; i++)
                         {
+                            int pageIdx = i;
                             <li class="page-item @(PageIndex == i ? "active" : "")">
-                                <button class="page-link" @onclick="() => GoToPage(i)">@i</button>
+                                <button class="page-link" @onclick="() => GoToPage(pageIdx)">@i</button>
                             </li>
                         }
                     }
@@ -173,8 +174,10 @@
                         // Show pages around the current page
                         @for (int i = Math.Max(2, PageIndex - 2); i <= Math.Min(TotalPages - 1, PageIndex + 2); i++)
                         {
+                            int pageIdx = i;
+
                             <li class="page-item @(PageIndex == i ? "active" : "")">
-                                <button class="page-link" @onclick="() => GoToPage(i)">@i</button>
+                                <button class="page-link" @onclick="() => GoToPage(pageIdx)">@i</button>
                             </li>
                         }
 

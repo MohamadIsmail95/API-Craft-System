@@ -6,10 +6,12 @@ using ApiCraftSystem.Repositories.ApiServices.Dtos;
 using ApiCraftSystem.Repositories.SchedulerService;
 using ApiCraftSystem.Shared;
 using AutoMapper;
+using Azure.Core;
 using Dapper;
 using Humanizer;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
@@ -185,7 +187,17 @@ namespace ApiCraftSystem.Repositories.ApiServices
         }
         public async Task<bool> FetchAndMap(ApiStoreDto input)
         {
+            //-----------Call Token From Third Party-----------
+            string tokenHeader = string.Empty;
 
+            if (input.ApiAuthType == ApiAuthType.Custom && !string.IsNullOrEmpty(input.AuthUrl) &&
+                !string.IsNullOrEmpty(input.AuthHeaderParam) && input.AuthMethodeType != null
+                && !string.IsNullOrEmpty(input.AuthResponseParam))
+            {
+                tokenHeader = await GetThirdPartyAPIToken(input.AuthUrl, input.AuthUrlBody, input.AuthMethodeType, input.AuthResponseParam);
+            }
+
+            //------------------------------------------------
             await CreateDynamicTableAsync(input);
 
             var method = string.Equals(input.MethodeType.ToString(), "POST", StringComparison.OrdinalIgnoreCase)
@@ -206,6 +218,21 @@ namespace ApiCraftSystem.Repositories.ApiServices
                 {
                     request.Headers.TryAddWithoutValidation(header.HeaderKey, header.HeaderValue);
                 }
+            }
+
+            if (!string.IsNullOrEmpty(tokenHeader) && !string.IsNullOrEmpty(input.AuthHeaderParam))
+            {
+                if (input.AuthHeaderParam.Trim().ToLower() == "bearer")
+                {
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenHeader);
+
+                }
+                else
+                {
+                    request.Headers.TryAddWithoutValidation(input.AuthHeaderParam, tokenHeader);
+
+                }
+
             }
 
             // Bearer Token Auth
@@ -465,5 +492,46 @@ namespace ApiCraftSystem.Repositories.ApiServices
             };
         }
 
+        private async Task<string> GetThirdPartyAPIToken(string? AuthUrl, string? AuthUrlBody,
+            ApiMethodeType? AuthMethodeType, string? AuthResponseParam)
+        {
+            using var httpClient = new HttpClient();
+            HttpResponseMessage loginResponse;
+
+            var method = string.Equals(AuthMethodeType.ToString(), "POST", StringComparison.OrdinalIgnoreCase)
+                ? HttpMethod.Post
+                : HttpMethod.Get;
+
+            // Body for POST
+            if (method == HttpMethod.Post && !string.IsNullOrWhiteSpace(AuthUrlBody))
+            {
+                var content = new StringContent(AuthUrlBody ?? "", Encoding.UTF8, "application/json");
+                loginResponse = await httpClient.PostAsync(AuthUrl, content);
+            }
+
+            else if (method == HttpMethod.Get)
+            {
+                loginResponse = await httpClient.GetAsync(AuthUrl);
+
+            }
+
+            else
+            {
+                throw new ArgumentException("Unsupported HTTP method");
+            }
+
+            // 2. Read and parse login response
+            if (!loginResponse.IsSuccessStatusCode)
+                throw new Exception($"Login request failed: {loginResponse.StatusCode}");
+
+            var loginJson = await loginResponse.Content.ReadAsStringAsync();
+
+            var token = JObject.Parse(loginJson)[AuthResponseParam]?.ToString();
+
+            if (string.IsNullOrEmpty(token))
+                throw new Exception($"Token not found in login response with property name '{AuthResponseParam}'");
+
+            return token;
+        }
     }
 }
