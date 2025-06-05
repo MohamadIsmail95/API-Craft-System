@@ -7,6 +7,7 @@ using ApiCraftSystem.Helper.Mapper;
 using ApiCraftSystem.Helper.Utility;
 using ApiCraftSystem.Repositories.ApiServices;
 using ApiCraftSystem.Repositories.ApiShareService;
+using ApiCraftSystem.Repositories.EmailService;
 using ApiCraftSystem.Repositories.GenericService;
 using ApiCraftSystem.Repositories.RateService;
 using ApiCraftSystem.Repositories.SchedulerService;
@@ -16,6 +17,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -44,6 +46,12 @@ namespace ApiCraftSystem
             builder.Services.AddScoped<IRateService, RateService>();
             builder.Services.AddScoped<ITenantService, TenantService>();
             builder.Services.AddScoped<IApiShareService, ApiShareService>();
+
+
+            //------------Email Config--------------------------
+
+            builder.Services.AddTransient<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+            builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
 
             builder.Services.AddAuthentication(options =>
