@@ -53,10 +53,12 @@ namespace ApiCraftSystem.Repositories.ApiServices
         public async Task CreateAsync(ApiStoreDto input, CancellationToken cancellationToken = default)
         {
             var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var user = await _db.Users.Where(x => x.Id == userId).SingleOrDefaultAsync();
 
             ApiStore api = _mapper.Map<ApiStore>(input);
             api.CreatedAt = DateTime.UtcNow;
             api.CreatedBy = Guid.Parse(userId);
+            api.TenantId = user?.TenantId;
             if (input.ScHour != null && input.ScMin != null)
             {
                 api.JobId = await _schedulerService.CreateScheduleAsync(input);
@@ -126,7 +128,13 @@ namespace ApiCraftSystem.Repositories.ApiServices
         }
         public async Task<PagingResponse> GetListAsync(PagingRequest input)
         {
+
             var query = _db.ApiStores.AsQueryable();
+
+            query = await FilterTenantAndRole(query);
+
+            if (query == null)
+                return new PagingResponse(null, 0, 0);
 
             // Filter
             if (!string.IsNullOrWhiteSpace(input.SearchTerm))
@@ -532,6 +540,41 @@ namespace ApiCraftSystem.Repositories.ApiServices
                 throw new Exception($"Token not found in login response with property name '{AuthResponseParam}'");
 
             return token;
+        }
+
+        private async Task<IQueryable<ApiStore>> FilterTenantAndRole(IQueryable<ApiStore> query)
+        {
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var user = await _db.Users.Where(x => x.Id == userId).Include(x => x.Role).SingleOrDefaultAsync();
+
+            if (user != null)
+            {
+
+                if (user?.Role?.Name == "SuperAdmin")
+                {
+                    return query;
+                }
+
+                if (user?.Role?.Name?.ToLower() == "admin")
+                {
+                    query = query.Where(x => x.TenantId == user.TenantId);
+
+                    return query;
+                }
+
+
+                if (user?.Role?.Name?.ToLower() == "user")
+                {
+                    query = query.Where(x => x.TenantId == user.TenantId && x.CreatedBy.ToString() == userId);
+
+                    return query;
+                }
+
+            }
+
+            return null;
+
         }
     }
 }

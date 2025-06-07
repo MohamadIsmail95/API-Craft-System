@@ -31,7 +31,7 @@
 }
 
 
-@if(apis == null)
+@if(apis != null && apis.Count() == 0)
 {
     <div class="d-flex justify-content-center">
         <div class="spinner-grow" role="status">
@@ -99,7 +99,7 @@ else
                 <tbody>
                     @if (apis == null)
                     {
-                        <tr><td colspan="6">Loading...</td></tr>
+                        <tr><td colspan="6">No Data Found</td></tr>
                     }
                     else if (!apis.Any())
                     {

@@ -54,6 +54,7 @@ namespace ApiCraftSystem.Repositories.ApiServices.Dtos
         public string? AuthHeaderParam { get; set; } = string.Empty;
         public string? AuthResponseParam { get; set; } = string.Empty;
         public ApiMethodeType? AuthMethodeType { get; set; } = ApiMethodeType.Post;
+        public Guid? TenantId { get; set; }
 
         public List<ApiHeaderDto>? ApiHeaders { get; set; } = new List<ApiHeaderDto>();
 

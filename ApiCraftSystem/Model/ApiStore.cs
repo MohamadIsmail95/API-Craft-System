@@ -1,5 +1,6 @@
 ﻿using ApiCraftSystem.Helper.Enums;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiCraftSystem.Model
 {
@@ -53,11 +54,12 @@ namespace ApiCraftSystem.Model
         public string? AuthResponseParam { get; set; } = string.Empty;
         public ApiMethodeType? AuthMethodeType { get; set; } = ApiMethodeType.Post;
 
-
-
+        [ForeignKey("Tenant")]
+        public Guid? TenantId { get; set; } = null;
         public bool IsDeleted { get; set; } = false;
 
 
+        public virtual Tenant? Tenant { get; set; }
         public virtual ICollection<ApiHeader>? ApiHeaders { get; set; }
         public virtual ICollection<ApiMap>? ApiMaps { get; set; }
     }
