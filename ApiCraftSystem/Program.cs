@@ -5,6 +5,7 @@ using ApiCraftSystem.Data;
 using ApiCraftSystem.HangFire;
 using ApiCraftSystem.Helper.Mapper;
 using ApiCraftSystem.Helper.Utility;
+using ApiCraftSystem.Repositories.AccountService;
 using ApiCraftSystem.Repositories.ApiServices;
 using ApiCraftSystem.Repositories.ApiShareService;
 using ApiCraftSystem.Repositories.EmailService;
@@ -46,6 +47,7 @@ namespace ApiCraftSystem
             builder.Services.AddScoped<IRateService, RateService>();
             builder.Services.AddScoped<ITenantService, TenantService>();
             builder.Services.AddScoped<IApiShareService, ApiShareService>();
+            builder.Services.AddScoped<IAccountService, AccountService>();
 
 
             //------------Email Config--------------------------

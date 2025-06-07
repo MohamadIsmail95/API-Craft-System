@@ -21,6 +21,7 @@ namespace ApiCraftSystem.Data
             modelBuilder.Entity<ApiHeader>().HasQueryFilter(h => !h.IsDeleted);
             modelBuilder.Entity<ApiMap>().HasQueryFilter(m => !m.IsDeleted);
             modelBuilder.Entity<ApiStore>().HasQueryFilter(m => !m.IsDeleted);
+            modelBuilder.Entity<ApplicationUser>().HasQueryFilter(m => !m.IsDeleted);
 
         }
     }

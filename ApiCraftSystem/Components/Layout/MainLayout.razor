@@ -1,4 +1,6 @@
 ﻿@inherits LayoutComponentBase
+@using ApiCraftSystem.Repositories.AccountService
+@using ApiCraftSystem.Repositories.AccountService.Dtos
 @using Microsoft.AspNetCore.Authorization
 
 <div class="page">
@@ -14,7 +16,8 @@
                 <NavLink class="nav-link" href="Account/Manage">
                     <span class="bi bi-person-fill-nav-menu" aria-hidden="true" style="font-size:x-large">
                         <i class="bi bi-person-gear"></i>
-                    </span> @context.User.Identity?.Name
+                    </span> @context.User.Identity?.Name  /  @CurrentUser.TenantName @CurrentUser.RoleName
+
                 </NavLink>
             </div>
 
@@ -32,3 +35,15 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code
+{
+    private UserDto CurrentUser = new UserDto();
+    [Inject] private IAccountService _accountService { get; set; }
+
+    protected override void OnInitialized()
+    {
+        CurrentUser = _accountService.GetCurrentUser();
+    }
+
+}

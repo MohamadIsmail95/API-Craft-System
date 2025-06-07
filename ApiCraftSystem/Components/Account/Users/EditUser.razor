@@ -1,0 +1,184 @@
+﻿@page "/Account/Edit-User/{Id:guid}"
+
+
+@using ApiCraftSystem.Repositories.AccountService
+@using ApiCraftSystem.Repositories.AccountService.Dtos
+@using ApiCraftSystem.Repositories.TenantService
+@using ApiCraftSystem.Repositories.TenantService.Dto
+@using ApiCraftSystem.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using System.ComponentModel.DataAnnotations
+
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@attribute [Authorize]
+@inject RoleManager<IdentityRole> _roleManager
+
+<PageTitle>@(string.IsNullOrEmpty(Id.ToString()) ? "Create User" : "Edit User")</PageTitle>
+
+<div class="row">
+    <div class="col-lg-6">
+        <StatusMessage Message="@Message" />
+        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
+            <DataAnnotationsValidator />
+            @if(string.IsNullOrEmpty(Id.ToString()))
+            {
+                <h2>Create New User</h2>
+            }
+            else
+            {
+                <h2>Edit User</h2>
+
+            }
+            <hr />
+            <ValidationSummary class="text-danger" role="alert" />
+             <label for="Input.Email">Email</label>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                <ValidationMessage For="() => Input.Email" class="text-danger" />
+            </div>
+             <label for="Input.Email">UserName</label>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.UserName" id="Input.UserName" class="form-control" autocomplete="username" aria-required="true" placeholder="Mohamad Ismail" />
+                <ValidationMessage For="() => Input.UserName" class="text-danger" />
+            </div>
+
+             <label for="Input.Email">PhoneNumber</label>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.PhoneNumber" id="Input.PhoneNumber" class="form-control" autocomplete="username" aria-required="true" placeholder="+963993991868" />
+                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+            </div>
+
+            @if (CurrentUser.RoleName == "SuperAdmin")
+            {
+                <label for="Input.TenantId">Tenants</label>
+
+                <div class="form-floating mb-3">
+                    <InputSelect @bind-Value="Input.TenantId" class="form-select" required>
+                       <option >Please Select</option>
+                        @foreach (var tenant in Tenants)
+                        {
+                            <option value="@tenant.Id">@tenant.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+            }
+           
+
+            <label for="exampleFormControlInput4" class="form-label">Roles</label>
+
+            <div class="form-floating mb-3">
+                <InputSelect @bind-Value="Input.RoleId" class="form-select" required>
+                    <option >Please Select</option>
+                    @foreach (var role in Roles)
+                    {
+                        <option value="@role.Id.ToString()">@role.Name</option>
+                    }
+                </InputSelect>
+            </div>
+
+           
+            <button type="submit" class="w-100 btn btn-lg btn-primary" style="margin-bottom:10px">Save</button>
+        </EditForm>
+    </div>
+   
+</div>
+
+ @code {
+    private IEnumerable<IdentityError>? identityErrors;
+
+    [Inject] private ITenantService _tenantService{ get; set; }
+
+    [Inject] private IAccountService _accountService { get; set; }
+
+    private List<TenantDto> Tenants = new List<TenantDto>();
+
+    private List<LookUpDto> Roles = new List<LookUpDto>();
+
+    private UserDto CurrentUser = new UserDto();
+
+    [Parameter] public Guid? Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentUser = await _accountService.GetCurrentUserAsync();
+
+        if (!string.IsNullOrEmpty(Id.ToString()))
+        {
+            await GetUser();
+        }
+        await LoadTenants();
+        await GetAllRoleNamesAsync();
+    }
+
+
+    public async Task RegisterUser(EditContext editContext)
+    {
+            await _accountService.UpdateAsync(new UpdateUserDto(Id.ToString(), Input.UserName, Input.Email, Input.PhoneNumber,
+             Input.RoleId.ToString(), CurrentUser.RoleName.Equals("SuperAdmin") ? Input.TenantId : CurrentUser.TenantId));
+
+            NavigationManager.NavigateTo("/app-users");
+
+        
+    }
+
+ 
+    private class InputModel
+    {
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = "";
+
+      
+        public string UserName { get; set; } = string.Empty;
+
+        public Guid? TenantId { get; set; }
+
+        public Guid? RoleId { get; set; }
+
+        public string? PhoneNumber { get; set; }
+
+
+
+    }
+
+    private async Task LoadTenants()
+    {
+        Tenants = await _tenantService.GetTenants();
+    }
+
+    private async Task GetAllRoleNamesAsync()
+    {
+        var roles = await Task.FromResult(_roleManager.Roles.ToList());
+        Roles =  roles.Select(x => new LookUpDto
+        {
+            Id = Guid.Parse(x.Id),
+            Name = x.Name
+        }).ToList();
+    }
+
+    private async Task GetUser()
+    {
+        var user = await _accountService.GetByIdAsync(Id.ToString());
+
+        Input.Email = user.Email;
+        Input.UserName = user.UserName;
+        Input.TenantId = user.TenantId;
+        Input.RoleId =Guid.Parse(user.RoleId);
+        Input.PhoneNumber = user.PhoneNumber;
+    }
+}

@@ -6,25 +6,16 @@ using ApiCraftSystem.Repositories.ApiServices.Dtos;
 using ApiCraftSystem.Repositories.SchedulerService;
 using ApiCraftSystem.Shared;
 using AutoMapper;
-using Azure.Core;
 using Dapper;
-using Humanizer;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
-using System.Data.Common;
 using System.Linq.Dynamic.Core;
-using System.Linq.Dynamic.Core.Tokenizer;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Reflection.PortableExecutable;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 
 namespace ApiCraftSystem.Repositories.ApiServices
 {

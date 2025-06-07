@@ -1,17 +1,15 @@
-﻿@page "/Api-Craft"
-@using ApiCraftSystem.Components.Rating
-@using ApiCraftSystem.Repositories.ApiServices.Dtos
+﻿@page "/app-users"
+@using ApiCraftSystem.Repositories.AccountService.Dtos
 @using Microsoft.AspNetCore.Authorization
 @rendermode InteractiveServer
-@inherits ApiCraftBase
+@inherits AppUserBase
 @attribute [StreamRendering]
 @inject NavigationManager NavigationManager
 @attribute [Authorize]
 
+<PageTitle>Application Users</PageTitle>
 
-<PageTitle>Api Craft</PageTitle>
-
-@if (result == true)
+@if (Result == true)
 {
     <div class="alert alert-success" role="alert">
         The operation was completed successfully
@@ -20,7 +18,7 @@
 }
 
 
-@if (result == false)
+@if (Result == false)
 {
     <div class="alert alert-danger" role="alert">
         The operation was faild , please contact with administrator
@@ -31,7 +29,7 @@
 }
 
 
-@if(apis == null)
+@if (Users == null)
 {
     <div class="d-flex justify-content-center">
         <div class="spinner-grow" role="status">
@@ -48,47 +46,45 @@ else
         <div class="card-body">
 
             <div>
-                <h5 class="card-title">API</h5>
-
-                <StarRating />
+                <h5 class="card-title">Application Users</h5>
 
             </div>
             
 
             <div class="position-absolute top-0 end-0 m-3">
-                <button type="button" class="btn btn-outline-primary" @onclick="@(() => NavigationManager.NavigateTo("/api-form"))">
+                <button type="button" class="btn btn-outline-primary" @onclick="@(() => NavigationManager.NavigateTo("/Account/Register"))">
                     <i class="bi bi-plus-lg"></i>
                 </button>
             </div>
             <div class="input-group mb-3" style="margin-top:20px">
                 <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input @oninput="OnSearchInput" value="@PagingRequest.SearchTerm" class="form-control" placeholder="Search employees..." />
+                <input @oninput="OnSearchInput" value="@PagingRequest.SearchTerm" class="form-control" placeholder="Search users..." />
             </div>
 
             <div class="responsive-table">
             <table class="table table-striped">
                 <thead>
                     <tr>
-                            <th @onclick="() => SortBy(nameof(ApiStoreListDto.Title))" style="cursor:pointer">
-                                Title
-                                @SortIcon(nameof(ApiStoreListDto.Title))
+                            <th @onclick="() => SortBy(nameof(UserDto.UserName))" style="cursor:pointer">
+                                UserName
+                                @SortIcon(nameof(UserDto.UserName))
                         </th>
-                            <th @onclick="() => SortBy(nameof(ApiStoreListDto.Description))" style="cursor:pointer">
-                                Description
-                                @SortIcon(nameof(ApiStoreListDto.Description))
+                            <th @onclick="() => SortBy(nameof(UserDto.Email))" style="cursor:pointer">
+                                Email
+                                @SortIcon(nameof(UserDto.Email))
                         </th>
-                            <th @onclick="() => SortBy(nameof(ApiStoreListDto.Url))" style="cursor:pointer">
-                                Url
-                                @SortIcon(nameof(ApiStoreListDto.Url))
+                            <th @onclick="() => SortBy(nameof(UserDto.PhoneNumber))" style="cursor:pointer">
+                                PhoneNumber
+                                @SortIcon(nameof(UserDto.PhoneNumber))
                         </th>
-                            <th @onclick="() => SortBy(nameof(ApiStoreListDto.MethodeType))" style="cursor:pointer">
-                            Type
-                                @SortIcon(nameof(ApiStoreListDto.MethodeType))
+                            <th @onclick="() => SortBy(nameof(UserDto.RoleId))" style="cursor:pointer">
+                            Role
+                                @SortIcon(nameof(UserDto.RoleId))
                         </th>
 
-                            <th @onclick="() => SortBy(nameof(ApiStoreListDto.ScHour))" style="cursor:pointer">
-                                Scheduling 24h
-                                @SortIcon(nameof(ApiStoreListDto.ScHour))
+                            <th @onclick="() => SortBy(nameof(UserDto.TenantId))" style="cursor:pointer">
+                                Tenant
+                                @SortIcon(nameof(UserDto.TenantId))
                             </th>
 
                        
@@ -97,39 +93,28 @@ else
                     </tr>
                 </thead>
                 <tbody>
-                    @if (apis == null)
+                    @if (Users == null)
                     {
                         <tr><td colspan="6">No Data Found</td></tr>
                     }
-                    else if (!apis.Any())
+                        else if (!Users.Any())
                     {
-                        <tr><td colspan="6">No ApI found.</td></tr>
+                        <tr><td colspan="6">No User found.</td></tr>
                     }
                     else
                     {
-                        @foreach (var api in apis)
+                        @foreach (var User in Users)
                         {
                             <tr>
-                                    <td>@api.Title</td>
-                                    <td>@api.Description</td>
-                                    <td>@api.Url</td>
-                                    <td>@api.MethodeType</td>
-                                    @if (@api.ScHour != null && @api.ScMin != null)
-                                    {
-                                        <td>Daily At : @api.ScHour : @api.ScMin</td>
-
-                                    }
-                                    else
-                                    {
-                                        <td></td>
-
-                                    }
+                                    <td>@User.UserName</td>
+                                    <td>@User.Email</td>
+                                    <td>@User.PhoneNumber</td>
+                                    <td>@User.RoleName</td>
+                                    <td>@User.TenantName</td>
 
                                 <td>
-                                        <button class="btn btn-primary btn-sm" @onclick="@(() => NavigationManager.NavigateTo("/api-form/" + api.Id))"><i class="bi bi-pencil-square"></i></button>
-                                        <button class="btn btn-danger btn-sm" @onclick="() => PromptOperation(api.Id ,true)"><i class="bi bi-trash"></i></button>
-                                        <button class="btn btn-success btn-sm" @onclick="() => PromptOperation(api.Id, false)"><i class="bi bi-gear-wide-connected"></i></button>
-
+                                        <button class="btn btn-primary btn-sm" @onclick="@(() => NavigationManager.NavigateTo("/Account/Edit-User/" + Guid.Parse(User.Id)))"><i class="bi bi-pencil-square"></i></button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => PromptOperation(User.Id)"><i class="bi bi-trash"></i></button>
 
                                 </td>
                             </tr>
@@ -208,9 +193,9 @@ else
 }
 
 
-@if (showConfirmation)
+@if (ShowConfirmation)
 {
-    @if (isFinish)
+    @if (IsFinish)
     {
         <div class="text-center">
             <div class="spinner-grow" style="width: 3rem; height: 3rem;" role="status">
@@ -235,9 +220,9 @@ else
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-secondary" @onclick="CloseConfirmation">Cancel</button>
-                        <button class="btn btn-danger" @onclick="ConfirmOperation" disabled="@isFinish">
+                        <button class="btn btn-danger" @onclick="ConfirmOperation" disabled="@IsFinish">
                             Continue
-                            @if (@isFinish)
+                            @if (@IsFinish)
                             {
                                 <span class="spinner-border spinner-border-sm"></span>
 
@@ -252,5 +237,4 @@ else
 
     }
 }
-
 

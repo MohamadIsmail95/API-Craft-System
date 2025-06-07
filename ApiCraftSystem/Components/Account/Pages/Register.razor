@@ -3,9 +3,12 @@
 @using System.ComponentModel.DataAnnotations
 @using System.Text
 @using System.Text.Encodings.Web
+@using ApiCraftSystem.Repositories.AccountService
+@using ApiCraftSystem.Repositories.AccountService.Dtos
 @using ApiCraftSystem.Repositories.TenantService
 @using ApiCraftSystem.Repositories.TenantService.Dto
 @using ApiCraftSystem.Shared
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using ApiCraftSystem.Data
@@ -18,44 +21,67 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject RoleManager<IdentityRole> _roleManager
+@attribute [Authorize]
 
-<PageTitle>Register</PageTitle>
-
-<h1>Register</h1>
+<PageTitle>@(string.IsNullOrEmpty(Id.ToString()) ? "Create User" : "Edit User")</PageTitle>
 
 <div class="row">
     <div class="col-lg-6">
         <StatusMessage Message="@Message" />
         <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
             <DataAnnotationsValidator />
-            <h2>Create a new account.</h2>
+            @if(string.IsNullOrEmpty(Id.ToString()))
+            {
+                <h2>Create New User</h2>
+            }
+            else
+            {
+                <h2>Edit User</h2>
+
+            }
             <hr />
             <ValidationSummary class="text-danger" role="alert" />
+             <label for="Input.Email">Email</label>
+
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label for="Input.Email">Email</label>
                 <ValidationMessage For="() => Input.Email" class="text-danger" />
             </div>
+             <label for="Input.Email">UserName</label>
+
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.UserName" id="Input.UserName" class="form-control" autocomplete="username" aria-required="true" placeholder="Mohamad Ismail" />
-                <label for="Input.Email">UserName</label>
                 <ValidationMessage For="() => Input.UserName" class="text-danger" />
             </div>
 
+             <label for="Input.Email">PhoneNumber</label>
+
             <div class="form-floating mb-3">
-                <label for="exampleFormControlInput4" class="form-label">Tenants</label>
-                <InputSelect @bind-Value="Input.TenantId" class="form-select" required>
-                    @foreach (var tenant in Tenants)
-                    {
-                        <option value="@tenant.Id">@tenant.Name</option>
-                    }
-                </InputSelect>
+                <InputText @bind-Value="Input.PhoneNumber" id="Input.PhoneNumber" class="form-control" autocomplete="username" aria-required="true" placeholder="+963993991868" />
+                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
             </div>
 
+            @if (CurrentUser.RoleName == "SuperAdmin")
+            {
+                <label for="Input.TenantId">Tenants</label>
+
+                <div class="form-floating mb-3">
+                    <InputSelect @bind-Value="Input.TenantId" class="form-select" required>
+                       <option >Please Select</option>
+                        @foreach (var tenant in Tenants)
+                        {
+                            <option value="@tenant.Id">@tenant.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+            }
+           
+
+            <label for="exampleFormControlInput4" class="form-label">Roles</label>
 
             <div class="form-floating mb-3">
-                <label for="exampleFormControlInput4" class="form-label">Roles</label>
                 <InputSelect @bind-Value="Input.RoleId" class="form-select" required>
+                    <option >Please Select</option>
                     @foreach (var role in Roles)
                     {
                         <option value="@role.Id">@role.Name</option>
@@ -63,18 +89,23 @@
                 </InputSelect>
             </div>
 
-
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+            @if(string.IsNullOrEmpty(Id.ToString()))
+            {
                 <label for="Input.Password">Password</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
-            </div>
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+
+                <div class="form-floating mb-3">
+                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                    <ValidationMessage For="() => Input.Password" class="text-danger" />
+                </div>
                 <label for="Input.ConfirmPassword">Confirm Password</label>
-                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+
+                <div class="form-floating mb-3">
+                    <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                    <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
+                </div>
+            }
+           
+            <button type="submit" class="w-100 btn btn-lg btn-primary" style="margin-bottom:10px">Register</button>
         </EditForm>
     </div>
     @* <div class="col-lg-4 col-lg-offset-2">
@@ -91,10 +122,15 @@
 
     [Inject] private ITenantService _tenantService{ get; set; }
 
+    [Inject] private IAccountService _accountService { get; set; }
 
     private List<TenantDto> Tenants = new List<TenantDto>();
 
     private List<LookUpDto> Roles = new List<LookUpDto>();
+
+    private UserDto CurrentUser = new UserDto();
+
+    [Parameter] public Guid? Id { get; set; }
 
     [SupplyParameterFromForm]
     private InputModel Input { get; set; } = new();
@@ -106,6 +142,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        CurrentUser = await _accountService.GetCurrentUserAsync();
         await LoadTenants();
         await GetAllRoleNamesAsync();
     }
@@ -113,42 +150,46 @@
 
     public async Task RegisterUser(EditContext editContext)
     {
-        var user = CreateUser();
+       
 
-        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-        var emailStore = GetEmailStore();
-        await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
-        user.RoleId = Input.RoleId;
-        user.UserName = Input.UserName;
-        user.TenantId = Input.TenantId;
-        var result = await UserManager.CreateAsync(user, Input.Password);
+            var user = CreateUser();
 
-        if (!result.Succeeded)
-        {
-            identityErrors = result.Errors;
-            return;
-        }
+            await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+            var emailStore = GetEmailStore();
+            await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+            user.RoleId = Input.RoleId.ToString();
+            user.UserName = Input.UserName;
+            user.TenantId = CurrentUser.RoleName == "SuperAdmin" ? Input.TenantId : CurrentUser.TenantId;
+            user.PhoneNumber = Input.PhoneNumber;
+            var result = await UserManager.CreateAsync(user, Input.Password);
 
-        Logger.LogInformation("User created a new account with password.");
+            if (!result.Succeeded)
+            {
+                identityErrors = result.Errors;
+                return;
+            }
 
-        var userId = await UserManager.GetUserIdAsync(user);
-        var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-        var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-            NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+            Logger.LogInformation("User created a new account with password.");
 
-        await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
+            var userId = await UserManager.GetUserIdAsync(user);
+            var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+                NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+                new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
 
-        if (UserManager.Options.SignIn.RequireConfirmedAccount)
-        {
-            RedirectManager.RedirectTo(
-                "Account/RegisterConfirmation",
-                new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
-        }
+            await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
 
-        await SignInManager.SignInAsync(user, isPersistent: false);
-        RedirectManager.RedirectTo(ReturnUrl);
+            if (UserManager.Options.SignIn.RequireConfirmedAccount)
+            {
+                RedirectManager.RedirectTo(
+                    "Account/RegisterConfirmation",
+                    new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
+            }
+
+            await SignInManager.SignInAsync(user, isPersistent: false);
+            RedirectManager.RedirectTo("app-users");
+       
     }
 
     private ApplicationUser CreateUser()
@@ -195,7 +236,11 @@
 
         public Guid? TenantId { get; set; }
 
-        public string? RoleId { get; set; }
+        public Guid? RoleId { get; set; }
+
+        public string? PhoneNumber { get; set; }
+
+
 
     }
 
@@ -213,4 +258,5 @@
             Name = x.Name
         }).ToList();
     }
+
 }
