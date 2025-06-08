@@ -150,46 +150,46 @@
 
     public async Task RegisterUser(EditContext editContext)
     {
-       
 
-            var user = CreateUser();
 
-            await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-            var emailStore = GetEmailStore();
-            await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
-            user.RoleId = Input.RoleId.ToString();
-            user.UserName = Input.UserName;
-            user.TenantId = CurrentUser.RoleName == "SuperAdmin" ? Input.TenantId : CurrentUser.TenantId;
-            user.PhoneNumber = Input.PhoneNumber;
-            var result = await UserManager.CreateAsync(user, Input.Password);
+        var user = CreateUser();
 
-            if (!result.Succeeded)
-            {
-                identityErrors = result.Errors;
-                return;
-            }
+        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+        var emailStore = GetEmailStore();
+        await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+        user.RoleId = Input.RoleId.ToString();
+        user.UserName = Input.UserName;
+        user.TenantId = CurrentUser.RoleName == "SuperAdmin" ? Input.TenantId : CurrentUser.TenantId;
+        user.PhoneNumber = Input.PhoneNumber;
+        var result = await UserManager.CreateAsync(user, Input.Password);
 
-            Logger.LogInformation("User created a new account with password.");
+        if (!result.Succeeded)
+        {
+            identityErrors = result.Errors;
+            return;
+        }
 
-            var userId = await UserManager.GetUserIdAsync(user);
-            var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-                NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+        Logger.LogInformation("User created a new account with password.");
 
-            await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
+        var userId = await UserManager.GetUserIdAsync(user);
+        var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+        var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+            NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
 
-            if (UserManager.Options.SignIn.RequireConfirmedAccount)
-            {
-                RedirectManager.RedirectTo(
-                    "Account/RegisterConfirmation",
-                    new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
-            }
+        await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
 
-            await SignInManager.SignInAsync(user, isPersistent: false);
-            RedirectManager.RedirectTo("app-users");
-       
+        if (UserManager.Options.SignIn.RequireConfirmedAccount)
+        {
+            RedirectManager.RedirectTo(
+                "Account/RegisterConfirmation",
+                new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
+        }
+
+        await SignInManager.SignInAsync(user, isPersistent: false);
+        RedirectManager.RedirectTo("app-users");
+
     }
 
     private ApplicationUser CreateUser()
@@ -252,11 +252,25 @@
     private async Task GetAllRoleNamesAsync()
     {
         var roles = await Task.FromResult(_roleManager.Roles.ToList());
-        Roles =  roles.Select(x => new LookUpDto
+
+        if(CurrentUser.RoleName == "SuperAdmin")
         {
-            Id = x.Id,
-            Name = x.Name
-        }).ToList();
+            Roles =  roles.Select(x => new LookUpDto
+                {
+                      Id = x.Id,
+                      Name = x.Name
+                }).ToList();
+        }
+        else
+        {
+             Roles =  roles.Select(x => new LookUpDto
+                      {
+                            Id = x.Id,
+                            Name = x.Name
+                      }).Where(x => x.Name != "SuperAdmin").ToList();
+        }
+
+       
     }
 
 }

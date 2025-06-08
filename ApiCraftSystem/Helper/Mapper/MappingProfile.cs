@@ -15,7 +15,6 @@ namespace ApiCraftSystem.Helper.Mapper
             CreateMap<ApiStore, ApiStoreDto>().ReverseMap();
             CreateMap<ApiHeader, ApiHeaderDto>().ReverseMap();
             CreateMap<ApiMap, ApiMapDto>().ReverseMap();
-            CreateMap<ApiStore, ApiStoreListDto>().ReverseMap();
             CreateMap<Rate, RateDto>().ReverseMap();
             CreateMap<Tenant, TenantDto>().ReverseMap();
             CreateMap<ApplicationUser, UserDto>()
@@ -31,7 +30,9 @@ namespace ApiCraftSystem.Helper.Mapper
                 .ReverseMap();
 
 
-
+            CreateMap<ApiStore, ApiStoreListDto>()
+                  .ForMember(dest => dest.TenantName, opt => opt.MapFrom(src => src.Tenant.Name))
+                .ReverseMap();
 
         }
     }

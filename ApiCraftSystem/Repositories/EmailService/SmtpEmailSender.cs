@@ -15,16 +15,17 @@ namespace ApiCraftSystem.Repositories.EmailService
 
         public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
-            var smtpHost = _config["Email:Host"];
-            var smtpPort = int.Parse(_config["Email:Port"]);
-            var smtpUser = _config["Email:Username"];
-            var smtpPass = _config["Email:Password"];
-            var fromEmail = _config["Email:FromEmail"];
+            var smtpHost = _config["EmailSettings:Host"];
+            var smtpPort = int.Parse(_config["EmailSettings:Port"]);
+            var smtpUser = _config["EmailSettings:Username"];
+            var smtpPass = _config["EmailSettings:Password"];
+            var fromEmail = _config["EmailSettings:FromEmail"];
 
             using var client = new SmtpClient(smtpHost, smtpPort)
             {
                 Credentials = new NetworkCredential(smtpUser, smtpPass),
-                EnableSsl = true
+                EnableSsl = true,
+                UseDefaultCredentials = false
             };
 
             using var message = new MailMessage(fromEmail, toEmail, subject, body)

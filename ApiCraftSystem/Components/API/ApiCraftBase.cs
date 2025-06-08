@@ -1,4 +1,6 @@
-﻿using ApiCraftSystem.Repositories.ApiServices;
+﻿using ApiCraftSystem.Repositories.AccountService;
+using ApiCraftSystem.Repositories.AccountService.Dtos;
+using ApiCraftSystem.Repositories.ApiServices;
 using ApiCraftSystem.Repositories.ApiServices.Dtos;
 using ApiCraftSystem.Repositories.ApiShareService;
 using ApiCraftSystem.Repositories.ApiShareService.Dtos;
@@ -12,6 +14,9 @@ namespace ApiCraftSystem.Components.API
     {
         [Inject] protected IApiService _apiService { get; set; }
         [Inject] protected IApiShareService _apiShareService { get; set; }
+
+        [Inject] private IAccountService _accountService { get; set; }
+
         protected PagingRequest PagingRequest = new PagingRequest();
         protected PagingResponse pagingResponse = new PagingResponse();
         protected Timer _searchDebounceTimer;
@@ -21,10 +26,13 @@ namespace ApiCraftSystem.Components.API
         protected bool? result = null;
         protected bool isDeletedOpt = false;
         protected bool isFinish = false;
+        protected UserDto CurrentUser = new UserDto();
 
 
         protected override async Task OnInitializedAsync()
         {
+            CurrentUser = await _accountService.GetCurrentUserAsync();
+
             await LoadApis(PagingRequest);
 
         }

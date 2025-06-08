@@ -120,7 +120,8 @@ namespace ApiCraftSystem.Repositories.ApiServices
         public async Task<PagingResponse> GetListAsync(PagingRequest input)
         {
 
-            var query = _db.ApiStores.AsQueryable();
+            var query = _db.ApiStores.Include(x => x.Tenant).AsQueryable();
+
 
             query = await FilterTenantAndRole(query);
 
@@ -150,7 +151,18 @@ namespace ApiCraftSystem.Repositories.ApiServices
             query = query.Skip((input.CurrentPage - 1) * input.PageSize).Take(input.PageSize);
 
             // Projection
-            var data = _mapper.Map<List<ApiStoreListDto>>(query);
+            var data = query.Select(x => new ApiStoreListDto
+            {
+                Id = x.Id,
+                Title = x.Title,
+                Description = x.Description,
+                Url = x.Url,
+                MethodeType = x.MethodeType,
+                ScHour = x.ScHour,
+                ScMin = x.ScMin,
+                Author = GetCreatorName(x.CreatedBy, _db),
+                TenantName = x.Tenant != null ? x.Tenant.Name : "SuperAdmin"
+            }).ToList();
 
             return new PagingResponse(data, (int)Math.Ceiling((double)totalCount / input.PageSize), totalCount);
 
@@ -567,5 +579,16 @@ namespace ApiCraftSystem.Repositories.ApiServices
             return null;
 
         }
+
+        public static string? GetCreatorName(Guid id, ApplicationDbContext dbContext)
+        {
+            if (id == Guid.Empty)
+                return "NA";
+
+            var user = dbContext.Users.FirstOrDefault(x => x.Id == id.ToString());
+
+            return user?.UserName ?? "NA";
+        }
+
     }
 }

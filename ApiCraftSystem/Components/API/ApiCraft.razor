@@ -86,12 +86,40 @@ else
                                 @SortIcon(nameof(ApiStoreListDto.MethodeType))
                         </th>
 
+                        @if(CurrentUser.RoleName == "Admin" || CurrentUser.RoleName == "SuperAdmin")
+                          {
+                              <th @onclick="() => SortBy(nameof(ApiStoreListDto.Author))" style="cursor:pointer">
+                                Author
+                                @SortIcon(nameof(ApiStoreListDto.Author))
+                               </th>
+
+                        }
+
+                        @if(CurrentUser.RoleName == "SuperAdmin")
+                         {
+                                <th @onclick="() => SortBy(nameof(ApiStoreListDto.TenantName))" style="cursor:pointer">
+                                    Tenant
+                                     @SortIcon(nameof(ApiStoreListDto.TenantName))
+                                 </th>
+
+                         }
+
+                      
+
+                            
+                            
+
                             <th @onclick="() => SortBy(nameof(ApiStoreListDto.ScHour))" style="cursor:pointer">
                                 Scheduling 24h
                                 @SortIcon(nameof(ApiStoreListDto.ScHour))
                             </th>
 
+                            
+
                        
+                               
+
+                            
 
                         <th>Actions</th>
                     </tr>
@@ -99,11 +127,11 @@ else
                 <tbody>
                     @if (apis == null)
                     {
-                        <tr><td colspan="6">No Data Found</td></tr>
+                        <tr><td colspan="8">No Data Found</td></tr>
                     }
                     else if (!apis.Any())
                     {
-                        <tr><td colspan="6">No ApI found.</td></tr>
+                        <tr><td colspan="8">No ApI found.</td></tr>
                     }
                     else
                     {
@@ -114,6 +142,18 @@ else
                                     <td>@api.Description</td>
                                     <td>@api.Url</td>
                                     <td>@api.MethodeType</td>
+                                    @if(CurrentUser.RoleName == "Admin" || CurrentUser.RoleName == "SuperAdmin")
+                                    {
+                                        <td>@api.Author</td>
+
+                                    }
+
+                                    @if(CurrentUser.RoleName == "SuperAdmin")
+                                    {
+                                        <td>@api.TenantName</td>
+
+                                    }
+
                                     @if (@api.ScHour != null && @api.ScMin != null)
                                     {
                                         <td>Daily At : @api.ScHour : @api.ScMin</td>
@@ -124,6 +164,12 @@ else
                                         <td></td>
 
                                     }
+
+                                   
+                                
+
+                                  
+                                   
 
                                 <td>
                                         <button class="btn btn-primary btn-sm" @onclick="@(() => NavigationManager.NavigateTo("/api-form/" + api.Id))"><i class="bi bi-pencil-square"></i></button>

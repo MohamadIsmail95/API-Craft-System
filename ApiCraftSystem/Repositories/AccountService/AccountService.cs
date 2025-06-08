@@ -153,7 +153,7 @@ namespace ApiCraftSystem.Repositories.AccountService
             var user = _db.Users.Include(x => x.Role).Include(x => x.Tenant).FirstOrDefault(x => x.Id == userId);
 
             if (user == null || string.IsNullOrEmpty(userId))
-                throw new Exception("ApiStore not found");
+                return null;
 
             return _mapper.Map<UserDto>(user);
         }
