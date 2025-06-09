@@ -42,11 +42,19 @@
                      <li class="nav-item">
                     <a class="nav-link @(CurrentStep == 4 ? "active" : "")" @onclick="() => SetStep(4)">API Payload</a>
                      </li>
-                }
 
-                  <li class="nav-item">
+                      <li class="nav-item">
                     <a class="nav-link @(CurrentStep == 5 ? "active" : "")" @onclick="() => SetStep(5)">Scheduling</a>
-                </li>
+                        </li>
+                    }
+                 else
+                 {
+                       <li class="nav-item">
+                    <a class="nav-link @(CurrentStep == 4 ? "active" : "")" @onclick="() => SetStep(4)">Scheduling</a>
+                        </li>
+                        
+                    }
+                 
               
             </ul>
         </div>
@@ -325,7 +333,8 @@
 
                     <button  class="btn btn-primary mb-3" type="button" @onclick="AddMap">+ Add Map</button>
                 }
-            else if(CurrentStep ==5)
+
+            else if((CurrentStep ==5 && ApiForm.MethodeType == ApiMethodeType.Post) || (CurrentStep ==4 && ApiForm.MethodeType == ApiMethodeType.Get))
             {     
                   @if(!string.IsNullOrEmpty(ApiForm.JobId))
                     {
@@ -397,7 +406,7 @@
                 {
                     <div>
                      
-                         <button class="btn btn-success" type="submit" disabled="@(!_isFormValid)">
+                         <button class="btn btn-success" type="submit" disabled="@(!_isFormValid)" style="margin:5px">
                                 @if(IsSave)
                                 {
                                   <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
@@ -405,14 +414,19 @@
                                 }
 
                              Submit</button>
-                         <button class="btn btn-outline-info" type="button" @onclick="RecreateTableAPI">
-                          @if(IsReCreate)
-                           {
-                              <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
 
-                           }
+                             @if(Id.HasValue)
+                            {
+                                 <button class="btn btn-outline-info" type="button" @onclick="RecreateTableAPI" disabled="@(!_isFormValid)">
+                                 @if(IsReCreate)
+                                {
+                                      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+
+                               }
 
                              ReCreate</button>
+                            }
+                           
                     </div>
                  
 

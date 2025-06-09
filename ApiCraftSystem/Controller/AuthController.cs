@@ -32,7 +32,7 @@ namespace ApiCraftSystem.Controller
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
-            var user = await _userManager.FindByEmailAsync(request.UserName);
+            var user = await _userManager.FindByNameAsync(request.UserName);
             if (user == null)
                 return Unauthorized("Invalid credentials");
 

@@ -13,7 +13,10 @@ namespace ApiCraftSystem.Repositories.ApiServices.Dtos
         public int? ScMin { get; set; } = null;
         public string? Periodic { get; set; } = string.Empty;
         public string? Author { get; set; } = string.Empty;
+        public Guid CreatedBy { get; set; }
         public string? TenantName { get; set; } = string.Empty;
+        public Guid? TenantId { get; set; } = null;
+
         public ApiStoreListDto() { }
 
         public ApiStoreListDto(Guid id, string title, string? description, string url, ApiMethodeType methodeType)

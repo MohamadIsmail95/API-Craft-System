@@ -88,18 +88,18 @@ else
 
                         @if(CurrentUser.RoleName == "Admin" || CurrentUser.RoleName == "SuperAdmin")
                           {
-                              <th @onclick="() => SortBy(nameof(ApiStoreListDto.Author))" style="cursor:pointer">
+                              <th @onclick="() => SortBy(nameof(ApiStoreListDto.CreatedBy))" style="cursor:pointer">
                                 Author
-                                @SortIcon(nameof(ApiStoreListDto.Author))
+                                @SortIcon(nameof(ApiStoreListDto.CreatedBy))
                                </th>
 
                         }
 
                         @if(CurrentUser.RoleName == "SuperAdmin")
                          {
-                                <th @onclick="() => SortBy(nameof(ApiStoreListDto.TenantName))" style="cursor:pointer">
+                                <th @onclick="() => SortBy(nameof(ApiStoreListDto.TenantId))" style="cursor:pointer">
                                     Tenant
-                                     @SortIcon(nameof(ApiStoreListDto.TenantName))
+                                     @SortIcon(nameof(ApiStoreListDto.TenantId))
                                  </th>
 
                          }
