@@ -12,6 +12,8 @@ namespace ApiCraftSystem.Controller
     {
 
         [HttpGet("T1")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+
         public IActionResult GetAction()
         {
             ComplexObjDto complexObjDto = new ComplexObjDto();

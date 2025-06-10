@@ -13,7 +13,7 @@
 @inject IdentityRedirectManager RedirectManager
 
 <PageTitle>Log in</PageTitle>
-<div class="container d-flex justify-content-end align-items-center min-vh-100 text-black">
+<div class="container d-flex justify-content-center align-items-center min-vh-100 text-black">
     <div class="card shadow-lg rounded-4 p-4" style="width: 43%; background-image:linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%)">
 
         <div class="text-center mb-4">
@@ -45,7 +45,13 @@
             </div>
 
             <div class="d-grid">
-                <button type="submit" class="btn btn-primary btn-lg">Log in</button>
+                <button type="submit" class="btn btn-primary btn-lg" disabled="@(IsLogIn)">
+                    @if (IsLogIn)
+                    {
+                         <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+
+                    }
+                    Log in</button>
             </div>
 
             <div class="text-center mt-3">
@@ -72,6 +78,8 @@
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
+    private bool IsLogIn { get; set; } = false;
+
     protected override async Task OnInitializedAsync()
     {
         if (HttpMethods.IsGet(HttpContext.Request.Method))
@@ -83,6 +91,7 @@
 
     public async Task LoginUser()
     {
+        IsLogIn = true;
         ReturnUrl = "Api-Craft";
         // This doesn't count login failures towards account lockout
         // To enable password failures to trigger account lockout, set lockoutOnFailure: true
@@ -90,16 +99,20 @@
         if (result.Succeeded)
         {
             Logger.LogInformation("User logged in.");
+            IsLogIn = false;
             RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.RequiresTwoFactor)
         {
+            IsLogIn = false;
+
             RedirectManager.RedirectTo(
                 "Account/LoginWith2fa",
                 new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
         }
         else if (result.IsLockedOut)
         {
+            IsLogIn = false;
             Logger.LogWarning("User account locked out.");
             RedirectManager.RedirectTo("Account/Lockout");
         }
@@ -107,6 +120,8 @@
         {
             errorMessage = "Error: Invalid login attempt.";
         }
+        IsLogIn = false;
+
     }
 
     private sealed class InputModel
