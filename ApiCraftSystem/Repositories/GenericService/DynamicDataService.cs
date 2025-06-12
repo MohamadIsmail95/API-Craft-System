@@ -21,7 +21,7 @@ namespace ApiCraftSystem.Repositories.GenericService
                 _ => throw new NotSupportedException("Unsupported provider.")
             };
 
-            string orderClause = string.IsNullOrWhiteSpace(orderBy) ? "ORDER BY SId" : $"ORDER BY {orderBy} {(ascending == true ? "ASC" : "DESC")}";
+            string orderClause = string.IsNullOrWhiteSpace(orderBy) ? "ORDER BY 1" : $"ORDER BY {orderBy} {(ascending == true ? "ASC" : "DESC")}";
             string sqlPaged = provider switch
             {
                 DatabaseType.SQLServer => $"SELECT * FROM (SELECT ROW_NUMBER() OVER ({orderClause}) AS RowNum, * FROM {tableName}) AS RowConstrainedResult WHERE RowNum > {pageIndex * pageSize} AND RowNum <= {(pageIndex + 1) * pageSize}",
