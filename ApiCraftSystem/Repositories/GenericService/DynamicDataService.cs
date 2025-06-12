@@ -1,4 +1,5 @@
 ﻿using ApiCraftSystem.Helper.Enums;
+using ApiCraftSystem.Helper.Utility;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Oracle.ManagedDataAccess.Client;
@@ -21,7 +22,14 @@ namespace ApiCraftSystem.Repositories.GenericService
                 _ => throw new NotSupportedException("Unsupported provider.")
             };
 
-            string orderClause = string.IsNullOrWhiteSpace(orderBy) ? "ORDER BY 1" : $"ORDER BY {orderBy} {(ascending == true ? "ASC" : "DESC")}";
+            // Try to fallback to a default column like 'Id', 'sid', or discover primary key
+            string? defaultOrderColumn = await GetFirstColumnNameAsync(connection, tableName, provider);
+
+            string orderClause = string.IsNullOrWhiteSpace(orderBy)
+                ? $"ORDER BY {defaultOrderColumn}"
+                : $"ORDER BY {orderBy} {(ascending == true ? "ASC" : "DESC")}";
+
+
             string sqlPaged = provider switch
             {
                 DatabaseType.SQLServer => $"SELECT * FROM (SELECT ROW_NUMBER() OVER ({orderClause}) AS RowNum, * FROM {tableName}) AS RowConstrainedResult WHERE RowNum > {pageIndex * pageSize} AND RowNum <= {(pageIndex + 1) * pageSize}",
@@ -49,6 +57,32 @@ namespace ApiCraftSystem.Repositories.GenericService
             return (data, total);
         }
 
+
+        private async Task<string?> GetFirstColumnNameAsync(IDbConnection connection, string tableName, DatabaseType provider)
+        {
+            string sql = provider switch
+            {
+                DatabaseType.SQLServer => @"
+            SELECT TOP 1 COLUMN_NAME 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME = @TableName 
+            ORDER BY ORDINAL_POSITION",
+
+                DatabaseType.Oracle => @"
+            SELECT COLUMN_NAME 
+            FROM ALL_TAB_COLUMNS 
+            WHERE TABLE_NAME = :TableName 
+            AND ROWNUM = 1 
+            ORDER BY COLUMN_ID",
+
+                _ => throw new NotSupportedException("Unsupported provider.")
+            };
+
+            var parameters = new DynamicParameters();
+            parameters.Add("TableName", provider == DatabaseType.Oracle ? tableName.ToUpper() : tableName);
+
+            return await connection.QueryFirstOrDefaultAsync<string>(sql, parameters);
+        }
 
     }
 }
