@@ -74,7 +74,7 @@ namespace ApiCraftSystem.Components.Generic
                 IsLoading = false;
 
             }
-            catch
+            catch (Exception ex)
             {
                 submitted = false;
                 IsLoading = false;
@@ -118,7 +118,7 @@ namespace ApiCraftSystem.Components.Generic
             using var package = new OfficeOpenXml.ExcelPackage();
             var worksheet = package.Workbook.Worksheets.Add("Export");
 
-            ExcelHeaders = ExcelHeaders.Where(x => x.ToLower() != "sid" && x.ToLower() != "rownum").ToList();
+            ExcelHeaders = ExcelHeaders.Where(x => x.ToLower() != "sid" && x.ToLower() != "rownum" && x.ToLower() != "rnum").ToList();
 
             for (int i = 0; i < ExcelHeaders.Count; i++)
             {
@@ -195,7 +195,7 @@ namespace ApiCraftSystem.Components.Generic
         protected async Task OnUsersSelected(ChangeEventArgs e)
         {
             var selectedValues = await JS.InvokeAsync<string[]>("getSelectedValues", userSelectRef);
-            DataCraftForm.UserIds =selectedValues.ToList();
+            DataCraftForm.UserIds = selectedValues.ToList();
         }
     }
 }

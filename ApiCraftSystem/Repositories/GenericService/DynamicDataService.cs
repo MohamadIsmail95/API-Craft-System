@@ -1,5 +1,4 @@
 ﻿using ApiCraftSystem.Helper.Enums;
-using ApiCraftSystem.Helper.Utility;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Oracle.ManagedDataAccess.Client;
@@ -39,6 +38,7 @@ namespace ApiCraftSystem.Repositories.GenericService
 
             string sqlCount = $"SELECT COUNT(*) FROM {tableName}";
 
+
             var rows = await connection.QueryAsync<dynamic>(sqlPaged);
             var total = await connection.ExecuteScalarAsync<int>(sqlCount);
 
@@ -56,7 +56,6 @@ namespace ApiCraftSystem.Repositories.GenericService
 
             return (data, total);
         }
-
 
         private async Task<string?> GetFirstColumnNameAsync(IDbConnection connection, string tableName, DatabaseType provider)
         {
@@ -80,6 +79,7 @@ namespace ApiCraftSystem.Repositories.GenericService
 
             var parameters = new DynamicParameters();
             parameters.Add("TableName", provider == DatabaseType.Oracle ? tableName.ToUpper() : tableName);
+
 
             return await connection.QueryFirstOrDefaultAsync<string>(sql, parameters);
         }

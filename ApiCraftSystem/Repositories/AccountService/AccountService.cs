@@ -67,7 +67,9 @@ namespace ApiCraftSystem.Repositories.AccountService
         {
             var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var query = _db.Users.Include(x => x.Tenant).Include(x => x.Role).Where(x => x.Role.Name != "SuperAdmin" && x.Id != userId).AsQueryable();
+            var query = _db.Users.Include(x => x.Tenant).Include(x => x.Role)
+                .Where(x => x.Id != userId)
+                .AsQueryable();
 
             query = await FilterTenantAndRole(query);
 
@@ -132,7 +134,7 @@ namespace ApiCraftSystem.Repositories.AccountService
 
                 if (user?.Role?.Name?.ToLower() == "admin")
                 {
-                    query = query.Where(x => x.TenantId == user.TenantId);
+                    query = query.Where(x => x.TenantId == user.TenantId && x.Role.Name != "SuperAdmin");
 
                     return query;
                 }

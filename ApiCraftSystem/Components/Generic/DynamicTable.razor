@@ -115,7 +115,7 @@
                     <tr>
                         @foreach (var header in Headers)
                         {
-                            if (header.ToLower() != "sid" && header.ToLower() != "rownum")
+                            if (header.ToLower() != "sid" && header.ToLower() != "rownum" && header.ToLower() != "rnum")
                             {
                                 <th @onclick="() => SortByColumn(header)">@header @(SortColumn == header ? (SortAscending ? "▲" : "▼") : "")</th>
 
@@ -129,7 +129,7 @@
                         <tr>
                             @foreach (var header in Headers)
                             {
-                                if (header.ToLower() != "sid" && header.ToLower() != "rownum")
+                                if (header.ToLower() != "sid" && header.ToLower() != "rownum" && header.ToLower() != "rnum")
                                 {
                                     <td>@(row.TryGetValue(header, out var val) ? val : null)</td>
 

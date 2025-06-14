@@ -9,6 +9,7 @@ using AutoMapper;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json.Linq;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
@@ -198,124 +199,134 @@ namespace ApiCraftSystem.Repositories.ApiServices
         }
         public async Task<bool> FetchAndMap(ApiStoreDto input)
         {
-            //-----------Call Token From Third Party-----------
-            string tokenHeader = string.Empty;
-
-            if (input.ApiAuthType == ApiAuthType.Custom && !string.IsNullOrEmpty(input.AuthUrl) &&
-                !string.IsNullOrEmpty(input.AuthHeaderParam) && input.AuthMethodeType != null
-                && !string.IsNullOrEmpty(input.AuthResponseParam))
+            try
             {
-                tokenHeader = await GetThirdPartyAPIToken(input.AuthUrl, input.AuthUrlBody, input.AuthMethodeType, input.AuthResponseParam);
-            }
 
-            //------------------------------------------------
-            await CreateDynamicTableAsync(input);
 
-            var method = string.Equals(input.MethodeType.ToString(), "POST", StringComparison.OrdinalIgnoreCase)
-                ? HttpMethod.Post
-                : HttpMethod.Get;
+                //-----------Call Token From Third Party-----------
+                string tokenHeader = string.Empty;
 
-            var handler = new HttpClientHandler();
-            if (input.ApiAuthType == ApiAuthType.Windows)
-                handler.UseDefaultCredentials = true;
-
-            using var client = new HttpClient(handler);
-            var request = new HttpRequestMessage(method, input.Url);
-
-            // Headers
-            if (input.ApiHeaders != null)
-            {
-                foreach (var header in input.ApiHeaders)
+                if (input.ApiAuthType == ApiAuthType.Custom && !string.IsNullOrEmpty(input.AuthUrl) &&
+                    !string.IsNullOrEmpty(input.AuthHeaderParam) && input.AuthMethodeType != null
+                    && !string.IsNullOrEmpty(input.AuthResponseParam))
                 {
-                    request.Headers.TryAddWithoutValidation(header.HeaderKey, header.HeaderValue);
-                }
-            }
-
-            if (!string.IsNullOrEmpty(tokenHeader) && !string.IsNullOrEmpty(input.AuthHeaderParam))
-            {
-                if (input.AuthHeaderParam.Trim().ToLower() == "bearer")
-                {
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenHeader);
-
-                }
-                else
-                {
-                    request.Headers.TryAddWithoutValidation(input.AuthHeaderParam, tokenHeader);
-
+                    tokenHeader = await GetThirdPartyAPIToken(input.AuthUrl, input.AuthUrlBody, input.AuthMethodeType, input.AuthResponseParam);
                 }
 
-            }
+                //------------------------------------------------
+                await CreateDynamicTableAsync(input);
 
-            // Bearer Token Auth
-            if (input.ApiAuthType == ApiAuthType.Bearer && !string.IsNullOrWhiteSpace(input.BearerToken))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", input.BearerToken);
-            }
+                var method = string.Equals(input.MethodeType.ToString(), "POST", StringComparison.OrdinalIgnoreCase)
+                    ? HttpMethod.Post
+                    : HttpMethod.Get;
 
-            // Body for POST
-            if (method == HttpMethod.Post && !string.IsNullOrWhiteSpace(input.ApiBody))
-            {
-                request.Content = new StringContent(input.ApiBody, Encoding.UTF8, "application/json");
-            }
+                var handler = new HttpClientHandler();
+                if (input.ApiAuthType == ApiAuthType.Windows)
+                    handler.UseDefaultCredentials = true;
 
-            var response = await client.SendAsync(request);
-            if (!response.IsSuccessStatusCode) return false;
+                using var client = new HttpClient(handler);
+                var request = new HttpRequestMessage(method, input.Url);
 
-            var content = await response.Content.ReadAsStringAsync();
-            var rootJson = JToken.Parse(content);
-
-            // STEP 1: Gather all records from root using unique root paths
-            var allRecords = new List<JToken>();
-            var rootPaths = input.ApiMaps
-                                 .Select(m => ParseObject.ExtractRootPath($"{input.PrifixRoot}.{m.FromKey}"))
-                                 .Distinct();
-
-            foreach (var rootPath in rootPaths)
-            {
-                var tokens = ParseObject.GetRootArray(rootJson, rootPath);
-                allRecords.AddRange(tokens);
-            }
-
-            if (!allRecords.Any()) return false;
-
-            using IDbConnection db = CreateDbConnection(input.DatabaseType, input.ConnectionString);
-
-            // STEP 2: Iterate each root item and map fields
-            foreach (var item in allRecords)
-            {
-                var parameters = new DynamicParameters();
-                var columns = new List<string>();
-                var values = new List<string>();
-
-                foreach (var mapping in input.ApiMaps)
+                // Headers
+                if (input.ApiHeaders != null)
                 {
-                    string prefix = input.PrifixRoot?.Trim('.').Trim() ?? string.Empty;
-                    string fromKey = mapping.FromKey?.Trim('.') ?? string.Empty;
-
-                    string concatFromKey = string.IsNullOrWhiteSpace(prefix)
-                        ? fromKey
-                        : $"{prefix}.{fromKey}";
-
-                    var extracted = ParseObject.ResolveWildcardValues(item, ParseObject.GetLastCleanSegment(concatFromKey));
-                    var first = extracted.FirstOrDefault();
-
-                    if (first != null)
+                    foreach (var header in input.ApiHeaders)
                     {
-                        columns.Add(mapping.MapKey);
-                        values.Add("@" + mapping.MapKey);
-                        parameters.Add(mapping.MapKey, first);
+                        request.Headers.TryAddWithoutValidation(header.HeaderKey, header.HeaderValue);
                     }
                 }
 
-                if (columns.Count == 0) continue;
+                if (!string.IsNullOrEmpty(tokenHeader) && !string.IsNullOrEmpty(input.AuthHeaderParam))
+                {
+                    if (input.AuthHeaderParam.Trim().ToLower() == "bearer")
+                    {
+                        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenHeader);
 
-                var sql = $@"INSERT INTO {input.TableName} ({string.Join(", ", columns)})
+                    }
+                    else
+                    {
+                        request.Headers.TryAddWithoutValidation(input.AuthHeaderParam, tokenHeader);
+
+                    }
+
+                }
+
+                // Bearer Token Auth
+                if (input.ApiAuthType == ApiAuthType.Bearer && !string.IsNullOrWhiteSpace(input.BearerToken))
+                {
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", input.BearerToken);
+                }
+
+                // Body for POST
+                if (method == HttpMethod.Post && !string.IsNullOrWhiteSpace(input.ApiBody))
+                {
+                    request.Content = new StringContent(input.ApiBody, Encoding.UTF8, "application/json");
+                }
+
+                var response = await client.SendAsync(request);
+                if (!response.IsSuccessStatusCode) return false;
+
+                var content = await response.Content.ReadAsStringAsync();
+                var rootJson = JToken.Parse(content);
+
+                // STEP 1: Gather all records from root using unique root paths
+                var allRecords = new List<JToken>();
+                var rootPaths = input.ApiMaps
+                                     .Select(m => ParseObject.ExtractRootPath($"{input.PrifixRoot}.{m.FromKey}"))
+                                     .Distinct();
+
+                foreach (var rootPath in rootPaths)
+                {
+                    var tokens = ParseObject.GetRootArray(rootJson, rootPath);
+                    allRecords.AddRange(tokens);
+                }
+
+                if (!allRecords.Any()) return false;
+
+                using IDbConnection db = CreateDbConnection(input.DatabaseType, input.ConnectionString);
+
+                // STEP 2: Iterate each root item and map fields
+                foreach (var item in allRecords)
+                {
+                    var parameters = new DynamicParameters();
+                    var columns = new List<string>();
+                    var values = new List<string>();
+
+                    foreach (var mapping in input.ApiMaps)
+                    {
+                        string prefix = input.PrifixRoot?.Trim('.').Trim() ?? string.Empty;
+                        string fromKey = mapping.FromKey?.Trim('.') ?? string.Empty;
+
+                        string concatFromKey = string.IsNullOrWhiteSpace(prefix)
+                            ? fromKey
+                            : $"{prefix}.{fromKey}";
+
+                        var extracted = ParseObject.ResolveWildcardValues(item, ParseObject.GetLastCleanSegment(concatFromKey));
+                        var first = extracted.FirstOrDefault();
+
+                        if (first != null)
+                        {
+                            columns.Add(input.DatabaseType == DatabaseType.Oracle ? $"\"{mapping.MapKey.ToUpper()}\"" : mapping.MapKey);
+                            values.Add(input.DatabaseType == DatabaseType.Oracle ? ":" + mapping.MapKey.ToUpper() : "@" + mapping.MapKey);
+                            parameters.Add(mapping.MapKey, first);
+                        }
+                    }
+
+                    if (columns.Count == 0) continue;
+
+                    var sql = $@"INSERT INTO {input.TableName} ({string.Join(", ", columns)})
                      VALUES ({string.Join(", ", values)})";
 
-                await db.ExecuteAsync(sql, parameters);
+                    await db.ExecuteAsync(sql, parameters);
+                }
+
+                return true;
             }
 
-            return true;
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
         public async Task ReCreateDynamicTableAsync(ApiStoreDto input)
         {
@@ -471,7 +482,7 @@ namespace ApiCraftSystem.Repositories.ApiServices
             return dbType switch
             {
                 DatabaseType.SQLServer => $"[{name}]",
-                DatabaseType.Oracle => $"\"{name.ToUpper()}\"",
+                DatabaseType.Oracle => $"{name.ToUpper()}",
                 _ => name
             };
         }
