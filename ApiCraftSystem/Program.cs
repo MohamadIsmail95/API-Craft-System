@@ -22,168 +22,199 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using NLog.Web;
 using OfficeOpenXml;
 using System.ComponentModel;
 using System.Text;
+using NLog;
+using ApiCraftSystem.Middlewares;
 namespace ApiCraftSystem
 {
     public class Program
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            var logger = LogManager.Setup()
+                        .LoadConfigurationFromFile("nlog.config")
+                        .GetCurrentClassLogger();
+            try
+            {
+                logger.Debug("Application is starting up");
 
-            // Add services to the container.
-            builder.Services.AddRazorComponents()
-                .AddInteractiveServerComponents();
+                var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddCascadingAuthenticationState();
-            builder.Services.AddScoped<IdentityUserAccessor>();
-            builder.Services.AddScoped<IdentityRedirectManager>();
-            builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
-            builder.Services.AddScoped<IApiService, ApiService>();
-            builder.Services.AddScoped<ISchedulerService, SchedulerService>();
-            builder.Services.AddScoped<IDynamicDataService, DynamicDataService>();
-            builder.Services.AddScoped<IRateService, RateService>();
-            builder.Services.AddScoped<ITenantService, TenantService>();
-            builder.Services.AddScoped<IApiShareService, ApiShareService>();
-            builder.Services.AddScoped<IAccountService, AccountService>();
+                // NLog: Clear default providers and use NLog
+                builder.Logging.ClearProviders();
+                builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace); // You can adjust to Warning or Info
+                builder.Host.UseNLog(); // Setup NLog for Dependency injection
+
+                // Add services to the container.
+                builder.Services.AddRazorComponents()
+                    .AddInteractiveServerComponents();
+
+                builder.Services.AddCascadingAuthenticationState();
+                builder.Services.AddScoped<IdentityUserAccessor>();
+                builder.Services.AddScoped<IdentityRedirectManager>();
+                builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+                builder.Services.AddScoped<IApiService, ApiService>();
+                builder.Services.AddScoped<ISchedulerService, SchedulerService>();
+                builder.Services.AddScoped<IDynamicDataService, DynamicDataService>();
+                builder.Services.AddScoped<IRateService, RateService>();
+                builder.Services.AddScoped<ITenantService, TenantService>();
+                builder.Services.AddScoped<IApiShareService, ApiShareService>();
+                builder.Services.AddScoped<IAccountService, AccountService>();
 
 
-            //------------Email Config--------------------------
+                //------------Email Config--------------------------
 
-            builder.Services.AddTransient<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-            builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
+                builder.Services.AddTransient<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+                builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
 
-            builder.Services.AddAuthentication(options =>
+                builder.Services.AddAuthentication(options =>
+                    {
+                        options.DefaultScheme = IdentityConstants.ApplicationScheme;
+                        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+                    });
+                // .AddIdentityCookies();
+
+                var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+                builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+
+                builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+                //builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                //    .AddEntityFrameworkStores<ApplicationDbContext>()
+                //    .AddSignInManager()
+                //    .AddDefaultTokenProviders();
+                builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
+                 .AddEntityFrameworkStores<ApplicationDbContext>()
+                 .AddSignInManager()
+                 .AddDefaultTokenProviders();
+
+
+
+                builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+                // Register AutoMapper
+                builder.Services.AddAutoMapper(typeof(MappingProfile));
+                builder.Services.AddHttpContextAccessor();
+                builder.Services.AddHttpClient(); // Basic registration
+                builder.Services.AddControllers(); // <--- Required for API support
+
+
+                // Add Hangfire services
+                builder.Services.AddHangfire(config =>
+                config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+               .UseSimpleAssemblyNameTypeSerializer()
+               .UseRecommendedSerializerSettings()
+               .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"))
+               .UseActivator(new HangfireActivator(builder.Services.BuildServiceProvider())));
+
+                builder.Services.AddHangfireServer();
+
+
+                // Read EPPlus configuration
+                var epplusSection = builder.Configuration.GetSection("EPPlus");
+                var licenseContext = epplusSection.GetValue<string>("LicenseContext");
+                var licenseKey = epplusSection.GetValue<string>("LicenseKey");
+
+                if (licenseContext == "NonCommercial")
                 {
-                    options.DefaultScheme = IdentityConstants.ApplicationScheme;
-                    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-                });
-            // .AddIdentityCookies();
-
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-            builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
-                options.UseSqlServer(connectionString));
-
-            builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-            //builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-            //    .AddEntityFrameworkStores<ApplicationDbContext>()
-            //    .AddSignInManager()
-            //    .AddDefaultTokenProviders();
-            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
-             .AddEntityFrameworkStores<ApplicationDbContext>()
-             .AddSignInManager()
-             .AddDefaultTokenProviders();
-
-
-
-            builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-
-            // Register AutoMapper
-            builder.Services.AddAutoMapper(typeof(MappingProfile));
-            builder.Services.AddHttpContextAccessor();
-            builder.Services.AddHttpClient(); // Basic registration
-            builder.Services.AddControllers(); // <--- Required for API support
-
-
-            // Add Hangfire services
-            builder.Services.AddHangfire(config =>
-            config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-           .UseSimpleAssemblyNameTypeSerializer()
-           .UseRecommendedSerializerSettings()
-           .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"))
-           .UseActivator(new HangfireActivator(builder.Services.BuildServiceProvider())));
-
-            builder.Services.AddHangfireServer();
-
-
-            // Read EPPlus configuration
-            var epplusSection = builder.Configuration.GetSection("EPPlus");
-            var licenseContext = epplusSection.GetValue<string>("LicenseContext");
-            var licenseKey = epplusSection.GetValue<string>("LicenseKey");
-
-            if (licenseContext == "NonCommercial")
-            {
-                ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization"); //This will also set the Company property to the organization name provided in the argument.
-            }
-
-
-            //JWT Token 
-
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                   .AddJwtBearer(options =>
-        {
-            var config = builder.Configuration;
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = config["Jwt:Issuer"],
-                ValidAudience = config["Jwt:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]))
-            };
-        });
-
-            builder.Services.AddScoped<JwtTokenGenerator>();
-
-
-
-
-            var app = builder.Build();
-
-            app.UseStaticFiles();
-
-
-            // Custom middleware to redirect unauthenticated users from root
-            app.Use(async (context, next) =>
-            {
-                // Redirect root "/" to login if not authenticated
-                if (context.Request.Path == "/" && !context.User.Identity.IsAuthenticated)
-                {
-                    context.Response.Redirect("/Account/Login"); // adjust route as needed
-                    return;
+                    ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization"); //This will also set the Company property to the organization name provided in the argument.
                 }
 
-                await next();
+
+                //JWT Token 
+
+                builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                       .AddJwtBearer(options =>
+            {
+                var config = builder.Configuration;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = config["Jwt:Issuer"],
+                    ValidAudience = config["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]))
+                };
             });
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseMigrationsEndPoint();
+                builder.Services.AddScoped<JwtTokenGenerator>();
+
+
+
+
+                var app = builder.Build();
+
+                app.UseMiddleware<GlobalExceptionMiddleware>();
+
+
+                app.UseStaticFiles();
+
+
+                // Custom middleware to redirect unauthenticated users from root
+                app.Use(async (context, next) =>
+                {
+                    // Redirect root "/" to login if not authenticated
+                    if (context.Request.Path == "/" && !context.User.Identity.IsAuthenticated)
+                    {
+                        context.Response.Redirect("/Account/Login"); // adjust route as needed
+                        return;
+                    }
+
+                    await next();
+                });
+
+                // Configure the HTTP request pipeline.
+                if (app.Environment.IsDevelopment())
+                {
+                    app.UseMigrationsEndPoint();
+                }
+                else
+                {
+                    app.UseExceptionHandler("/Error");
+                    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                    app.UseHsts();
+                }
+
+                // Use Hangfire dashboard
+                app.UseHangfireDashboard("/hangfire", new DashboardOptions
+                {
+                    Authorization = new[] { new HangfireAuthorizationFilter() }
+                }); // /hangfire
+
+                app.UseHttpsRedirection();
+
+                app.UseAntiforgery();
+
+                app.MapStaticAssets();
+                app.MapControllers(); // <--- Maps your API endpoints
+
+                app.MapRazorComponents<App>()
+                    .AddInteractiveServerRenderMode();
+
+                // Add additional endpoints required by the Identity /Account Razor components.
+                app.MapAdditionalIdentityEndpoints();
+
+                app.Run();
             }
-            else
+            catch (Exception ex)
             {
-                app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
+                // NLog: Catch startup errors
+                logger.Error(ex, "Unhandled exception during application startup");
+                throw;
             }
-
-            // Use Hangfire dashboard
-            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            finally
             {
-                Authorization = new[] { new HangfireAuthorizationFilter() }
-            }); // /hangfire
-
-            app.UseHttpsRedirection();
-
-            app.UseAntiforgery();
-
-            app.MapStaticAssets();
-            app.MapControllers(); // <--- Maps your API endpoints
-
-            app.MapRazorComponents<App>()
-                .AddInteractiveServerRenderMode();
-
-            // Add additional endpoints required by the Identity /Account Razor components.
-            app.MapAdditionalIdentityEndpoints();
-
-            app.Run();
+                // Ensure to flush and stop internal timers/threads before application exit
+                LogManager.Shutdown();
+            }
         }
+
     }
 }
