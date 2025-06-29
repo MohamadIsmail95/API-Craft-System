@@ -60,7 +60,7 @@ namespace ApiCraftSystem.Components.Generic
                     SortColumn,
                     SortAscending,
                     PageIndex - 1,
-                    PageSize
+                    PageSize, null, null, null
                 );
                 Data = result.Data;
                 TotalCount = result.TotalCount;
@@ -105,7 +105,7 @@ namespace ApiCraftSystem.Components.Generic
                 SortColumn,
                 SortAscending,
                 0,
-                10000000
+                10000000, null, null, null
             );
             var ExcelData = resultExcel.Data;
 
@@ -191,7 +191,6 @@ namespace ApiCraftSystem.Components.Generic
         {
             ShareLink = string.Empty;
         }
-
         protected async Task OnUsersSelected(ChangeEventArgs e)
         {
             var selectedValues = await JS.InvokeAsync<string[]>("getSelectedValues", userSelectRef);

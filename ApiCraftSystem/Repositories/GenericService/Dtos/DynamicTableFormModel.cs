@@ -16,5 +16,7 @@ namespace ApiCraftSystem.Repositories.GenericService.Dtos
 
         public List<string>? UserIds { get; set; } = new List<string>();
 
+        public string? DateFilterColumnName { get; set; } = string.Empty;
+
     }
 }

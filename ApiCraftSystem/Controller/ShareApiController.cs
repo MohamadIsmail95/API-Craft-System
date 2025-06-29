@@ -63,7 +63,10 @@ namespace ApiCraftSystem.Controller
                 input.OrderBy,
                 input.Ascending,
                 input.PageIndex,
-                input.PageSize
+                input.PageSize,
+                input.DateFrom,
+                input.DateTo,
+                shareApi.DateFilterColumnName
             );
 
             return Ok(new { Data = result.Data, Count = result.TotalCount });

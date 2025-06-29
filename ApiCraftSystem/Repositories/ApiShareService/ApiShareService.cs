@@ -43,7 +43,7 @@ namespace ApiCraftSystem.Repositories.ApiShareService
             string urlShare = $"{serverRoot}?ApiKey={apiKey}";
 
             ApiShare apiShare = new ApiShare(urlShare, apiKey,
-                input.ConnectionString, input.SelectedProvider, input.TableName, string.Join(",", input.UserIds));
+                input.ConnectionString, input.SelectedProvider, input.TableName, string.Join(",", input.UserIds), input.DateFilterColumnName);
 
             apiShare.CreatedBy = Guid.Parse(userId);
 
@@ -71,7 +71,7 @@ namespace ApiCraftSystem.Repositories.ApiShareService
             string urlShare = $"{serverRoot}?ApiKey={apiKey}";
 
             ApiShare apiShare = new ApiShare(urlShare, apiKey,
-                input.ConnectionString, input.DatabaseType, input.TableName, null);
+                input.ConnectionString, input.DatabaseType, input.TableName, null, null);
 
             apiShare.CreatedBy = Guid.Parse(userId);
 

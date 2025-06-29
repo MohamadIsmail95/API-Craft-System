@@ -53,6 +53,12 @@
                 <ValidationMessage For="@(() => DataCraftForm.TableName)" />
             </div>
 
+            <div class="mb-3">
+                <label for="connectionString" class="form-label">Date Filter Column Name</label>
+                <InputText @bind-Value="DataCraftForm.DateFilterColumnName" class="form-control" />
+                <ValidationMessage For="@(() => DataCraftForm.DateFilterColumnName)" />
+            </div>
+
 
            <div class="mb-3">
               <label for="userSelect" class="form-label fw-bold">Select Users</label>

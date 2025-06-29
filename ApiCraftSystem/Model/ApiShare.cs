@@ -11,11 +11,12 @@ namespace ApiCraftSystem.Model
         public DatabaseType DatabaseType { get; set; } = DatabaseType.SQLServer;
         public string TableName { get; set; } = string.Empty;
         public string? UserIds { get; set; } = string.Empty;
+        public string? DateFilterColumnName { get; set; } = string.Empty;
 
         public ApiShare() { }
 
         public ApiShare(string url, string apiKey, string connectionString, DatabaseType databaseType,
-            string tableName, string? userIds)
+            string tableName, string? userIds, string? dateFilterColumnName)
         {
             Id = Guid.NewGuid();
             Url = url;
@@ -24,6 +25,7 @@ namespace ApiCraftSystem.Model
             DatabaseType = databaseType;
             TableName = tableName;
             UserIds = userIds;
+            DateFilterColumnName = dateFilterColumnName;
         }
     }
 }

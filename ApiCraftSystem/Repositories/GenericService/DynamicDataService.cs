@@ -1,6 +1,8 @@
 ﻿using ApiCraftSystem.Helper.Enums;
+using ApiCraftSystem.Helper.Utility;
 using Dapper;
 using Microsoft.Data.SqlClient;
+using Microsoft.IdentityModel.Tokens;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Dynamic;
@@ -17,11 +19,14 @@ namespace ApiCraftSystem.Repositories.GenericService
         }
 
         public async Task<(List<ExpandoObject> Data, int TotalCount)> GetPagedDataAsync(string connectionString, DatabaseType provider,
-            string tableName, string? orderBy, bool? ascending, int? pageIndex, int? pageSize)
+            string tableName, string? orderBy, bool? ascending,
+            int? pageIndex, int? pageSize, DateTime? dateFrom, DateTime? dateTo, string? dateFilterColumnName)
         {
             try
             {
 
+                string sqlPaged = string.Empty;
+                string sqlCount = string.Empty;
 
                 using IDbConnection connection = provider switch
                 {
@@ -38,15 +43,35 @@ namespace ApiCraftSystem.Repositories.GenericService
                     : $"ORDER BY {orderBy} {(ascending == true ? "ASC" : "DESC")}";
 
 
-                string sqlPaged = provider switch
+                if (dateFrom != null && dateTo != null && !string.IsNullOrEmpty(dateFilterColumnName))
                 {
-                    DatabaseType.SQLServer => $"SELECT * FROM (SELECT ROW_NUMBER() OVER ({orderClause}) AS RowNum, * FROM {tableName}) AS RowConstrainedResult WHERE RowNum > {pageIndex * pageSize} AND RowNum <= {(pageIndex + 1) * pageSize}",
-                    DatabaseType.Oracle => $"SELECT * FROM (SELECT a.*, ROWNUM rnum FROM (SELECT * FROM {tableName} {orderClause}) a WHERE ROWNUM <= {(pageIndex + 1) * pageSize}) WHERE rnum > {pageIndex * pageSize}",
-                    _ => throw new NotSupportedException("Unsupported provider.")
-                };
+                    dateFrom = convertDate.convertDateToArabStandardDate((DateTime)dateFrom);
+                    dateTo = convertDate.convertDateToArabStandardDate((DateTime)dateTo).AddDays(1).AddSeconds(-1);
 
-                string sqlCount = $"SELECT COUNT(*) FROM {tableName}";
+                    sqlPaged = provider switch
+                    {
+                        DatabaseType.SQLServer => $"SELECT * FROM (SELECT ROW_NUMBER() OVER ({orderClause}) AS RowNum, * FROM {tableName} where {dateFilterColumnName} between '{dateFrom}' and '{dateTo}') AS RowConstrainedResult WHERE RowNum > {pageIndex * pageSize} AND RowNum <= {(pageIndex + 1) * pageSize}",
+                        DatabaseType.Oracle => $"SELECT * FROM (SELECT a.*, ROWNUM rnum FROM (SELECT * FROM {tableName} where {dateFilterColumnName} between '{dateFrom}' and '{dateTo}' {orderClause}) a WHERE ROWNUM <= {(pageIndex + 1) * pageSize}) WHERE rnum > {pageIndex * pageSize}",
+                        _ => throw new NotSupportedException("Unsupported provider.")
+                    };
 
+                    sqlCount = $"SELECT COUNT(*) FROM {tableName} where {dateFilterColumnName} between '{dateFrom}' and '{dateTo}'";
+
+
+                }
+
+                else
+                {
+                    sqlPaged = provider switch
+                    {
+                        DatabaseType.SQLServer => $"SELECT * FROM (SELECT ROW_NUMBER() OVER ({orderClause}) AS RowNum, * FROM {tableName}) AS RowConstrainedResult WHERE RowNum > {pageIndex * pageSize} AND RowNum <= {(pageIndex + 1) * pageSize}",
+                        DatabaseType.Oracle => $"SELECT * FROM (SELECT a.*, ROWNUM rnum FROM (SELECT * FROM {tableName} {orderClause}) a WHERE ROWNUM <= {(pageIndex + 1) * pageSize}) WHERE rnum > {pageIndex * pageSize}",
+                        _ => throw new NotSupportedException("Unsupported provider.")
+                    };
+
+                    sqlCount = $"SELECT COUNT(*) FROM {tableName}";
+
+                }
 
                 var rows = await connection.QueryAsync<dynamic>(sqlPaged);
                 var total = await connection.ExecuteScalarAsync<int>(sqlCount);
