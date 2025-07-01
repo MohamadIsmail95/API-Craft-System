@@ -41,6 +41,8 @@ namespace ApiCraftSystem.Components.Generic
 
         protected ElementReference userSelectRef;
 
+        protected bool IsExport = false;
+
         protected override async Task OnInitializedAsync()
         {
             await LoadUsersAsync();
@@ -97,7 +99,7 @@ namespace ApiCraftSystem.Components.Generic
         }
         protected async Task ExportToExcel()
         {
-
+            IsExport = true;
             var resultExcel = await _service.GetPagedDataAsync(
                 DataCraftForm.ConnectionString,
                 DataCraftForm.SelectedProvider,
@@ -146,6 +148,7 @@ namespace ApiCraftSystem.Components.Generic
             using var streamRef = new MemoryStream(bytes);
             using var dotnetStreamRef = new DotNetStreamReference(streamRef);
             await JS.InvokeVoidAsync("downloadFile", fileName, dotnetStreamRef);
+            IsExport = false;
         }
         protected async Task PrevPage()
         {

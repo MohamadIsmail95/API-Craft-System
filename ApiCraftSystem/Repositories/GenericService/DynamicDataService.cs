@@ -45,17 +45,43 @@ namespace ApiCraftSystem.Repositories.GenericService
 
                 if (dateFrom != null && dateTo != null && !string.IsNullOrEmpty(dateFilterColumnName))
                 {
-                    dateFrom = convertDate.convertDateToArabStandardDate((DateTime)dateFrom);
-                    dateTo = convertDate.convertDateToArabStandardDate((DateTime)dateTo).AddDays(1).AddSeconds(-1);
+                    var dateFromStr = ((DateTime)dateFrom).ToString("yyyy-MM-dd HH:mm:ss");
+                    var dateToStr = ((DateTime)dateTo).ToString("yyyy-MM-dd HH:mm:ss");
 
                     sqlPaged = provider switch
                     {
-                        DatabaseType.SQLServer => $"SELECT * FROM (SELECT ROW_NUMBER() OVER ({orderClause}) AS RowNum, * FROM {tableName} where {dateFilterColumnName} between '{dateFrom}' and '{dateTo}') AS RowConstrainedResult WHERE RowNum > {pageIndex * pageSize} AND RowNum <= {(pageIndex + 1) * pageSize}",
-                        DatabaseType.Oracle => $"SELECT * FROM (SELECT a.*, ROWNUM rnum FROM (SELECT * FROM {tableName} where {dateFilterColumnName} between '{dateFrom}' and '{dateTo}' {orderClause}) a WHERE ROWNUM <= {(pageIndex + 1) * pageSize}) WHERE rnum > {pageIndex * pageSize}",
+                        DatabaseType.SQLServer =>
+                            $"SELECT * FROM (SELECT ROW_NUMBER() OVER ({orderClause}) AS RowNum, * FROM {tableName} WHERE {dateFilterColumnName} BETWEEN '{dateFromStr}' AND '{dateToStr}') AS RowConstrainedResult WHERE RowNum > {pageIndex * pageSize} AND RowNum <= {(pageIndex + 1) * pageSize}",
+
+                        DatabaseType.Oracle =>
+                            $@"SELECT * FROM (
+                              SELECT a.*, ROWNUM rnum FROM (
+                               SELECT *
+                               FROM {tableName}
+                              WHERE {dateFilterColumnName} BETWEEN 
+                              TO_DATE('{dateFromStr}', 'YYYY-MM-DD HH24:MI:SS') AND 
+                              TO_DATE('{dateToStr}', 'YYYY-MM-DD HH24:MI:SS')
+                              {orderClause}
+                              ) a
+                               WHERE ROWNUM <= {(pageIndex + 1) * pageSize}
+                              ) WHERE rnum > {pageIndex * pageSize}",
+
                         _ => throw new NotSupportedException("Unsupported provider.")
                     };
 
-                    sqlCount = $"SELECT COUNT(*) FROM {tableName} where {dateFilterColumnName} between '{dateFrom}' and '{dateTo}'";
+                    sqlCount = provider switch
+                    {
+                        DatabaseType.SQLServer =>
+                            $"SELECT COUNT(*) FROM {tableName} WHERE {dateFilterColumnName} BETWEEN '{dateFromStr}' AND '{dateToStr}'",
+
+                        DatabaseType.Oracle =>
+                            $@"SELECT COUNT(*) FROM {tableName}
+                           WHERE {dateFilterColumnName} BETWEEN 
+                          TO_DATE('{dateFromStr}', 'YYYY-MM-DD HH24:MI:SS') AND 
+                         TO_DATE('{dateToStr}', 'YYYY-MM-DD HH24:MI:SS')",
+                        _ => throw new NotSupportedException("Unsupported provider.")
+                    };
+
 
 
                 }
