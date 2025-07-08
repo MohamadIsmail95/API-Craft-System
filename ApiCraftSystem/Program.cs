@@ -5,6 +5,7 @@ using ApiCraftSystem.Data;
 using ApiCraftSystem.HangFire;
 using ApiCraftSystem.Helper.Mapper;
 using ApiCraftSystem.Helper.Utility;
+using ApiCraftSystem.Middlewares;
 using ApiCraftSystem.Repositories.AccountService;
 using ApiCraftSystem.Repositories.ApiServices;
 using ApiCraftSystem.Repositories.ApiShareService;
@@ -14,6 +15,7 @@ using ApiCraftSystem.Repositories.RateService;
 using ApiCraftSystem.Repositories.SchedulerService;
 using ApiCraftSystem.Repositories.TenantService;
 using Hangfire;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -22,12 +24,11 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using NLog;
 using NLog.Web;
 using OfficeOpenXml;
 using System.ComponentModel;
 using System.Text;
-using NLog;
-using ApiCraftSystem.Middlewares;
 namespace ApiCraftSystem
 {
     public class Program
@@ -146,6 +147,10 @@ namespace ApiCraftSystem
 
                 builder.Services.AddScoped<JwtTokenGenerator>();
 
+                //add basic auth
+
+                builder.Services.AddAuthentication("BasicAuthentication")
+               .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 
 
 

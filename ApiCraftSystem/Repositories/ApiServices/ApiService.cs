@@ -13,10 +13,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Newtonsoft.Json.Linq;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
+using System.Globalization;
 using System.Linq.Dynamic.Core;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ApiCraftSystem.Repositories.ApiServices
 {
@@ -257,10 +259,31 @@ namespace ApiCraftSystem.Repositories.ApiServices
                     request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", input.BearerToken);
                 }
 
+
+                //Basic Auth
+
+                if (input.ApiAuthType == ApiAuthType.Basic && !string.IsNullOrEmpty(input.BasicUserName) &&
+                    !string.IsNullOrEmpty(input.BasicPassword))
+                {
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{input.BasicUserName}:{input.BasicPassword}")));
+
+                }
+
                 // Body for POST
                 if (method == HttpMethod.Post && !string.IsNullOrWhiteSpace(input.ApiBody))
                 {
-                    request.Content = new StringContent(input.ApiBody, Encoding.UTF8, "application/json");
+
+                    if (ContainsDateIff(input.ApiBody))
+                    {
+                        string resolvedJson = ReplaceDatePlaceholders(input.ApiBody);
+                        request.Content = new StringContent(resolvedJson, Encoding.UTF8, "application/json");
+
+                    }
+                    else
+                    {
+                        request.Content = new StringContent(input.ApiBody, Encoding.UTF8, "application/json");
+
+                    }
                 }
 
                 var response = await client.SendAsync(request);
@@ -513,7 +536,6 @@ namespace ApiCraftSystem.Repositories.ApiServices
                 _ => throw new NotSupportedException()
             };
         }
-
         private async Task<string> GetThirdPartyAPIToken(string? AuthUrl, string? AuthUrlBody,
             ApiMethodeType? AuthMethodeType, string? AuthResponseParam)
         {
@@ -599,6 +621,44 @@ namespace ApiCraftSystem.Repositories.ApiServices
             var user = dbContext.Users.FirstOrDefault(x => x.Id == id.ToString());
 
             return user?.UserName ?? "NA";
+        }
+
+        //Check if any dateIff placeholder exists
+        private static bool ContainsDateIff(string json)
+        {
+            var pattern = @"\{\{dateIff\(([^,]+),([^\)]+)\)\}\}";
+            return Regex.IsMatch(json, pattern);
+        }
+
+        // Replace all dateIff placeholders
+        private static string ReplaceDatePlaceholders(string json)
+        {
+            var pattern = @"\{\{dateIff\(([^,]+),([^\)]+)\)\}\}";
+
+            return Regex.Replace(json, pattern, match =>
+            {
+                string offsetStr = match.Groups[1].Value.Trim();
+                string formatStr = match.Groups[2].Value.Trim();
+
+                if (!int.TryParse(offsetStr, out int offsetDays))
+                {
+                    throw new ArgumentException($"Invalid offset in placeholder: {offsetStr}");
+                }
+
+                DateTime targetDate = DateTime.Now.AddDays(offsetDays);
+
+                string formattedDate;
+                try
+                {
+                    formattedDate = targetDate.ToString(formatStr, CultureInfo.InvariantCulture);
+                }
+                catch (FormatException)
+                {
+                    throw new ArgumentException($"Invalid date format: {formatStr}");
+                }
+
+                return formattedDate;
+            });
         }
 
     }

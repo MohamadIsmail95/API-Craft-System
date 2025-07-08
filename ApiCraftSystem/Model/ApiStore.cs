@@ -58,6 +58,9 @@ namespace ApiCraftSystem.Model
         public Guid? TenantId { get; set; } = null;
         public bool IsDeleted { get; set; } = false;
 
+        public string BasicUserName { get; set; } = string.Empty;
+
+        public string BasicPassword { get; set; } = string.Empty;
 
         public virtual Tenant? Tenant { get; set; }
         public virtual ICollection<ApiHeader>? ApiHeaders { get; set; }

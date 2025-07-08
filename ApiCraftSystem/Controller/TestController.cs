@@ -68,5 +68,23 @@ namespace ApiCraftSystem.Controller
             return Ok(new { Data = complexObjDto });
 
         }
+
+        [HttpPost("GetBasicEmployees")]
+        [Authorize(AuthenticationSchemes = "BasicAuthentication")]
+        public IActionResult GetBasicEmployees(BasicFilter input)
+        {
+            List<Employee> employees = new List<Employee>();
+
+            for (int i = 1; i < 50; i++)
+            {
+                Employee employee = new Employee(i, "Mohammad", "Test", i + 1, DateTime.Now.AddDays(-i));
+                employees.Add(employee);
+            }
+
+            var result = employees.Where(x => x.HireDate >= input.DateFrom && x.HireDate <= input.DateTo).ToList();
+
+            return Ok(result);
+
+        }
     }
 }

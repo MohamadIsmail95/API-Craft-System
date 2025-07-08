@@ -245,7 +245,21 @@
 
                  }
 
+                @if (ApiForm.ApiAuthType == ApiAuthType.Basic)
+                    {
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="exampleFormControlInput1" class="form-label">UserName</label>
+                                <InputText @bind-Value="ApiForm.BasicUserName" class="form-control" rows="2" />
+                            </div>
 
+                            <div class="col-md-6 mb-3">
+                                <label for="exampleFormControlInput1" class="form-label">Password</label>
+                                <InputText type="password" @bind-Value="ApiForm.BasicPassword" class="form-control" rows="2" />
+                            </div>
+                        </div>
+
+                    }
 
                 }
             else if (CurrentStep == 2)

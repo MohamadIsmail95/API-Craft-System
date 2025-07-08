@@ -5,6 +5,7 @@
         None,
         Bearer,
         Windows,
-        Custom
+        Custom,
+        Basic
     }
 }
