@@ -86,5 +86,49 @@ namespace ApiCraftSystem.Controller
             return Ok(result);
 
         }
+
+
+        [HttpPost("SitePower")]
+        public IActionResult GetCabinets()
+        {
+            var responseData = new CabinetResponseDto
+            {
+                Model = new List<CabinetModelDto>
+            {
+                new CabinetModelDto
+                {
+                    Name = "Dummar-West",
+                    BATTERRYTYPE = null,
+                    CABINETPOWERLIBRARY = "Huawei Solar Battery Cabinet",
+                    Id = 1161,
+                    NUmberOfPSU = 3,
+                    RENEWABLECABINETTYPE = "Controller With Battary",
+                    SpaceInstallation = 0,
+                    TPVersion = null,
+                    OtherBatteryType = "-",
+                    BatCapacity = "-600A"
+                }
+            },
+                Type = new List<CabinetTypeDto>
+            {
+                new CabinetTypeDto { Attribute = "Name", DataType = "string" },
+                new CabinetTypeDto { Attribute = "BatterryTypeId", DataType = "List" },
+                new CabinetTypeDto { Attribute = "CabinetPowerLibraryId", DataType = "List" },
+                new CabinetTypeDto { Attribute = "Id", DataType = "int" },
+                new CabinetTypeDto { Attribute = "NUmberOfPSU", DataType = "int" },
+                new CabinetTypeDto { Attribute = "RenewableCabinetTypeId", DataType = "List" },
+                new CabinetTypeDto { Attribute = "SpaceInstallation", DataType = "float" },
+                new CabinetTypeDto { Attribute = "TPVersion", DataType = "string" },
+                new CabinetTypeDto { Dynamic = "Other Battery Type", DataType = "string" },
+                new CabinetTypeDto { Dynamic = "Bat Capacity", DataType = "string" }
+            }
+            };
+
+            var result = ApiResponse<CabinetResponseDto>.Success(responseData, count: 2000);
+
+            return Ok(result);
+        }
+
+
     }
 }

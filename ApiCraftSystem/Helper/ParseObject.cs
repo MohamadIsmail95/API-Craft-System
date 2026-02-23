@@ -86,6 +86,12 @@ namespace ApiCraftSystem.Helper
         public static List<object?> ResolveWildcardValues(JToken token, string path)
         {
             var normalizedPath = path.Replace("[*]", "");
+
+            // If path contains space or special characters → wrap it
+            if (normalizedPath.Contains(" "))
+            {
+                normalizedPath = $"['{normalizedPath}']";
+            }
             var selectedTokens = token.SelectTokens(normalizedPath).ToList();
 
             var results = new List<object?>();
